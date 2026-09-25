@@ -1,0 +1,146 @@
+{
+ "career1": {
+  "hook": [
+   "What your IQ is",
+   "(Career edition)"
+  ],
+  "sections": [
+   [
+    "Engineer",
+    "115-130IQ"
+   ],
+   [
+    "Scientist",
+    "125-140IQ"
+   ],
+   [
+    "Accountant",
+    "110-125IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ },
+ "career2": {
+  "hook": [
+   "What your IQ is",
+   "(Career edition)"
+  ],
+  "sections": [
+   [
+    "Teacher",
+    "105-120IQ"
+   ],
+   [
+    "Scientist",
+    "125-140IQ"
+   ],
+   [
+    "Lawyer",
+    "115-130IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ },
+ "career3": {
+  "hook": [
+   "What your IQ is",
+   "(Career edition)"
+  ],
+  "sections": [
+   [
+    "Accountant",
+    "110-125IQ"
+   ],
+   [
+    "Software Developer",
+    "120-135IQ"
+   ],
+   [
+    "Engineer",
+    "115-130IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ },
+ "subject1": {
+  "hook": [
+   "What your IQ is",
+   "(Subject edition)"
+  ],
+  "sections": [
+   [
+    "Chemistry",
+    "120-135IQ"
+   ],
+   [
+    "Astronomy",
+    "120-140IQ"
+   ],
+   [
+    "Geology",
+    "110-125IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ },
+ "subject2": {
+  "hook": [
+   "What your IQ is",
+   "(Subject edition)"
+  ],
+  "sections": [
+   [
+    "Economics",
+    "120-135IQ"
+   ],
+   [
+    "Engineering",
+    "120-135IQ"
+   ],
+   [
+    "History",
+    "105-120IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ },
+ "subject3": {
+  "hook": [
+   "What your IQ is",
+   "(Subject edition)"
+  ],
+  "sections": [
+   [
+    "Statistics",
+    "125-140IQ"
+   ],
+   [
+    "Physics",
+    "125-140IQ"
+   ],
+   [
+    "Geography",
+    "105-120IQ"
+   ]
+  ],
+  "cta": [
+   "Do you know your IQ?",
+   null
+  ]
+ }
+}

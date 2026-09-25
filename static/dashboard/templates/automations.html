@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Automations · iOS Agents</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-text">
+                    <span class="brand-name">iOS Agents</span>
+                </span>
+            </a>
+            <nav class="topbar-nav">
+                <a class="button secondary" href="/">Devices</a>
+                <a class="button secondary" href="/automations" aria-current="page">Automations</a>
+                <a class="button secondary" href="/tasks">Tasks</a>
+                __PLUGIN_NAV____AUTH_NAV__
+            </nav>
+        </div>
+    </header>
+    <main class="shell">
+        <header class="page-header">
+            <div>
+
+                <h1>Make room for the work that matters.</h1>
+                <p>Choose a workflow, connect a device, and let the routine run.</p>
+            </div>
+        </header>
+
+        <aside class="layout-preface" role="note">
+
+            <div>
+                <strong>Engine tuned for iPhone 13 &amp; iPhone 14</strong>
+                <p>Coordinate profiles, picker rules, and publish paths ship calibrated for the shared 390×844 layout (iPhone 13 / 14). Other models need Touch points calibration before you rely on taps.</p>
+            </div>
+        </aside>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div><h2>Templates</h2></div>
+            </div>
+            <div class="automation-template-grid" role="list">
+                <button type="button" class="automation-template" data-template="pipeline" role="listitem" aria-pressed="false">
+                    <span class="automation-template-app">TikTok</span>
+                    <span class="automation-template-title">Post pipeline</span>
+                    <span class="automation-template-desc">Queue video + title/caption. Auto-check on a cadence you choose (production slots or fast test intervals) and publish the next ready item straight to TikTok.</span>
+                    <span class="automation-template-meta">Video · caption · publish</span>
+                </button>
+                <a class="automation-template muted-template" href="/" role="listitem">
+                    <span class="automation-template-app">TikTok</span>
+                    <span class="automation-template-title">Warmup</span>
+                    <span class="automation-template-desc">For You browse session — open a device to configure duration, personality, and engagement.</span>
+                    <span class="automation-template-meta">Open a device →</span>
+                </a>
+                <a class="automation-template muted-template" href="/" role="listitem">
+                    <span class="automation-template-app">TikTok</span>
+                    <span class="automation-template-title">Engagement</span>
+                    <span class="automation-template-desc">Following-feed session on people you already follow. Run from a device page.</span>
+                    <span class="automation-template-meta">Open a device →</span>
+                </a>
+                <a class="automation-template muted-template" href="/" role="listitem">
+                    <span class="automation-template-app">TikTok</span>
+                    <span class="automation-template-title">Create a post</span>
+                    <span class="automation-template-desc">One-shot publish with media attached now. Use the pipeline when you want a queue drained on a clock.</span>
+                    <span class="automation-template-meta">Open a device →</span>
+                </a>
+            </div>
+        </section>
+
+        <section id="pipeline-workspace" class="panel automation-workspace" hidden>
+            <div class="section-heading">
+                <div>
+
+                    <h2>Queue &amp; schedule</h2>
+                </div>
+            </div>
+            <p class="workflows-lead">Add ready forms (video + title). Auto drains <strong>one ready item</strong> per tick — empty queues skip TikTok entirely. Name phones <code>#1</code>, <code>#2</code>… for fleet stagger.</p>
+
+            <div class="field automation-device-field">
+                <label for="pipeline-device">Device</label>
+                <select id="pipeline-device" required>
+                    <option value="">Select an iPhone…</option>
+                </select>
+            </div>
+            <label class="checkbox-option"><input id="pipeline-fleet" type="checkbox"> All connected devices · stagger +5 min by farm # (#1 on time, #2 +5 m, #3 +10 m…)</label>
+            <p id="pipeline-fleet-hint" class="run-meta" hidden></p>
+
+            <form id="pipeline-form" class="pipeline-add">
+                <label for="pipeline-video">Video</label>
+                <input id="pipeline-video" type="file" accept="video/*" required>
+                <label for="pipeline-caption">Title / caption</label>
+                <textarea id="pipeline-caption" maxlength="2200" placeholder="Caption that goes on the TikTok…" required></textarea>
+                <div class="form-actions">
+                    <span id="pipeline-add-result" class="run-meta" aria-live="polite"></span>
+                    <span class="spacer"></span>
+                    <button id="pipeline-submit" class="button primary" type="submit">Add to queue</button>
+                </div>
+            </form>
+
+            <div class="pipeline-controls">
+                <label class="checkbox-option"><input id="pipeline-auto" type="checkbox"> Auto-check enabled</label>
+                <label class="pipeline-frequency-field" for="pipeline-frequency">Frequency
+                    <select id="pipeline-frequency">
+                        <option value="production">4× daily · 12 / 3 / 6 / 9 PM ET</option>
+                        <option value="60">Every hour</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="5">Every 5 minutes (test)</option>
+                        <option value="1">Every minute (test)</option>
+                    </select>
+                </label>
+                <button id="pipeline-check-now" class="button secondary" type="button">Check now</button>
+                <button id="pipeline-refresh" class="icon-button" type="button">Refresh</button>
+            </div>
+            <p id="pipeline-status" class="run-meta" aria-live="polite"></p>
+            <h3 class="pipeline-queue-heading">Queue</h3>
+            <div id="pipeline-list" class="task-list pipeline-list loading-card"><span class="spinner" aria-hidden="true"></span>Select a device…</div>
+        </section>
+    </main>
+    <script type="module" src="/assets/automations.js"></script>
+</body>
+</html>

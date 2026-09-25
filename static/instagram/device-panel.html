@@ -1,0 +1,38 @@
+<style>.instagram-form{display:grid;gap:10px;margin:12px 0 24px}.instagram-form label{display:grid;gap:4px}.timing{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}</style>
+<p>Schedule one-off or recurring private workflows. Device-specific accounts and coordinates belong in <code>pluginData["com.git-agni.instagram"]</code>.</p>
+<form id="instagram-doomscroll-form" class="instagram-form">
+  <h3>Warmup</h3>
+  <div class="timing"><label>Duration (minutes)<input name="duration" type="number" min="1" max="180" value="5" required></label><label>Personality<select name="personality"><option>casual</option><option>skimmer</option><option>engaged</option></select></label><label>Account<input name="account" autocomplete="off"></label></div>
+  <div><label><input name="like" type="checkbox" checked> Like</label> <label><input name="comment" type="checkbox"> Comment</label></div>
+  <div class="timing" data-timing><label>Schedule<select name="timingKind"><option value="now">Run now</option><option value="once">Once</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label><label>When / local time<input name="time" type="datetime-local"></label><label>Weekdays (0–6)<input name="weekdays" placeholder="1,3,5"></label></div>
+  <button type="submit">Schedule warmup</button>
+</form>
+<p id="instagram-form-result" class="muted"></p>
+<script>
+(function () {
+  var pluginId = 'com.git-agni.instagram';
+  var deviceUdid = decodeURIComponent(location.pathname.split('/').pop());
+  var result = document.getElementById('instagram-form-result');
+  function timing(form) {
+    var kind = form.get('timingKind');
+    if (kind === 'now') return {kind: 'now'};
+    var raw = String(form.get('time') || '');
+    if (!raw) throw new Error('Choose a date/time.');
+    if (kind === 'once') return {kind: 'once', runAt: new Date(raw).toISOString()};
+    var localTime = raw.includes('T') ? raw.split('T')[1].slice(0, 5) : raw.slice(0, 5);
+    var base = {kind: kind, localTime: localTime, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone};
+    if (kind === 'weekly') base.weekdays = String(form.get('weekdays') || '').split(',').map(Number).filter(Number.isInteger);
+    return base;
+  }
+  async function schedule(taskType, payload, scheduleTiming, assetIds) {
+    var response = await fetch('/api/schedules', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({deviceUdid: deviceUdid, task: {pluginId: pluginId, taskType: taskType, taskVersion: 1, payload: payload}, timing: scheduleTiming, assetIds: assetIds || []})});
+    if (!response.ok) throw new Error((await response.json()).error || 'Request failed');
+    result.textContent = 'Task scheduled.';
+    setTimeout(function () { location.reload(); }, 600);
+  }
+  document.getElementById('instagram-doomscroll-form').addEventListener('submit', async function (event) {
+    event.preventDefault(); result.textContent = 'Scheduling…';
+    try { var form = new FormData(event.currentTarget); var payload = {durationMinutes: Number(form.get('duration')), personality: form.get('personality'), likeEnabled: form.has('like'), commentEnabled: form.has('comment')}; if (form.get('account')) payload.account = form.get('account'); await schedule('doomscroll', payload, timing(form)); } catch (error) { result.textContent = error.message; }
+  });
+})();
+</script>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Devices · iOS Agents</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script src="/assets/htmx.min.js" defer></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-text">
+                    <span class="brand-name">iOS Agents</span>
+                </span>
+            </a>
+            <nav class="topbar-nav" aria-label="Main navigation">
+                <a class="crumb" href="/" aria-current="page">Devices</a>
+                <a class="crumb" href="/automations">Automations</a>
+                <a class="crumb" href="/tasks">Tasks</a>
+                <a class="button primary" href="/devices/register">Add device <span aria-hidden="true">+</span></a>
+                <button class="button secondary" type="button" id="open-setup-guide">Setup guide</button>
+                __PLUGIN_NAV____AUTH_NAV__
+            </nav>
+        </div>
+    </header>
+    <main class="shell home-shell">
+        <header class="page-header">
+            <div>
+
+                <div class="workspace-symbol" aria-hidden="true"><span></span><span></span><span></span></div>
+                <h1>Your devices, ready to work.</h1>
+                <p>A workspace for your phones, content, and everyday automations.</p>
+            </div>
+        </header>
+        <div class="fleet-list-heading"><h2>Connected workspace</h2><button class="icon-button" type="button" hx-get="/api/fragments/devices" hx-target="#device-list" hx-swap="outerHTML">Refresh</button></div>
+        <section id="device-list" class="device-list" hx-get="/api/fragments/devices" hx-trigger="load" hx-swap="outerHTML" aria-live="polite">
+            <div class="loading-card"><span class="spinner" aria-hidden="true"></span>Looking for connected devices…</div>
+        </section>
+        <p class="workspace-footnote">Connect an iPhone to get started. Your saved touch points stay with each device.</p>
+    </main>
+    <dialog id="setup-guide" class="setup-dialog" aria-labelledby="setup-title">
+        <div class="modal setup-modal">
+            <div class="setup-head">
+                <span class="eyebrow" id="setup-step-label">Step 1 of 8</span>
+                <button class="icon-button setup-close" type="button" data-setup-close aria-label="Close">×</button>
+            </div>
+            <div class="setup-steps">
+                <section class="setup-step" data-step>
+                    <h2 id="setup-title">1 · Let Claude set up your Mac and phone</h2>
+                    <p>You need a Mac with the latest <strong>Xcode</strong>, an <strong>iPhone</strong> in Developer Mode, <strong>Palmier Pro</strong>, and Claude Code. Don’t do it by hand — copy this prompt, open Claude Code with this repo’s folder attached, paste it, and Claude walks you through every step and checks it.</p>
+                    <div class="setup-prompt-row">
+                        <button class="button primary" type="button" data-copy-prompt="/assets/setup-prompt.md">Copy the setup prompt</button>
+                        <a class="button secondary" href="/assets/setup-prompt.md" target="_blank" rel="noopener">Read it</a>
+                        <span class="setup-copied" data-copy-status aria-live="polite"></span>
+                    </div>
+                    <textarea class="setup-prompt-box" data-prompt-box hidden readonly spellcheck="false" aria-label="Setup prompt"></textarea>
+                    <p class="setup-note">Come back here when Claude says setup is done (≈30 minutes, once).</p>
+                </section>
+                <section class="setup-step" data-step hidden>
+                    <h2>2 · Put your files in a folder</h2>
+                    <p>One folder per format, e.g. <code>~/Reels/my-format</code>. Drop in:</p>
+                    <ul>
+                        <li>your raw takes (one take per sentence or section works best)</li>
+                        <li>the images or screenshots you want on screen</li>
+                        <li>the song — it gets baked into the video</li>
+                        <li>a reference reel (URL or file) if you’re copying a format</li>
+                    </ul>
+                    <p class="setup-note">Claude names and organises everything; you don’t need to sort it.</p>
+                </section>
+                <section class="setup-step" data-step hidden>
+                    <h2>3 · Give it to Claude and tell it exactly what you want</h2>
+                    <p>Copy this prompt into Claude Code (repo folder attached), then say where the folder is and describe the edit <strong>in as much depth as you can</strong>: the structure, what’s on screen when, the music, the length, what must never happen.</p>
+                    <div class="setup-prompt-row">
+                        <button class="button primary" type="button" data-copy-prompt="/assets/agent-prompt.md">Copy the Claude prompt</button>
+                        <a class="button secondary" href="/assets/agent-prompt.md" target="_blank" rel="noopener">Read it</a>
+                        <span class="setup-copied" data-copy-status aria-live="polite"></span>
+                    </div>
+                    <textarea class="setup-prompt-box" data-prompt-box hidden readonly spellcheck="false" aria-label="Claude prompt"></textarea>
+                    <p class="setup-note">The more specific you are here, the fewer questions later.</p>
+                </section>
+                <section class="setup-step" data-step hidden>
+                    <h2>4 · Review what Claude made</h2>
+                    <p>Claude cuts every pause, places your images, builds the video in Palmier Pro with the sound baked in, and <strong>hands it back to you</strong>. Watch it. Say what’s wrong, as precisely as you can — Claude fixes it in place and returns it again.</p>
+                    <p class="setup-note">Repeat until it’s right. That version becomes the template for every video after it.</p>
+                </section>
+                <section class="setup-step" data-step hidden>
+                    <h2>5 · Send it to Edits and tell it the text</h2>
+                    <p>Once you approve the cut, Claude runs it through <strong>Instagram Edits</strong> on your phone: auto-captions plus your headers. Tell it what text goes on screen, when, and how it should look (font, size, colour, position).</p>
+                    <p><strong>Claude will pause and ask.</strong> Answer specifically. Sound is already in the video from Palmier — nothing is added in Edits.</p>
+                    <p class="setup-note">After this first video, every one after it is a single command.</p>
+                </section>
+                <section class="setup-step" data-step hidden>
+                    <h2>6 · Have it post</h2>
+                    <p>Tell Claude to post — normal reel or trial reel, now or spaced out. It shares from the Instagram app on your phone and logs the time.</p>
+                    <p>That’s it. Reopen this guide any time from <strong>Setup guide</strong> in the top bar.</p>
+                </section>
+            </div>
+            <div class="setup-nav">
+                <button class="button secondary setup-chevron" type="button" data-setup-prev aria-label="Previous step">‹</button>
+                <div class="setup-dots" id="setup-dots" aria-hidden="true"></div>
+                <button class="button primary setup-chevron" type="button" data-setup-next aria-label="Next step">›</button>
+            </div>
+        </div>
+    </dialog>
+    <script>
+    (function () {
+        var dialog = document.getElementById('setup-guide');
+        if (!dialog || typeof dialog.showModal !== 'function') return;
+        var steps = Array.prototype.slice.call(dialog.querySelectorAll('[data-step]'));
+        var dots = document.getElementById('setup-dots');
+        var label = document.getElementById('setup-step-label');
+        var prev = dialog.querySelector('[data-setup-prev]');
+        var next = dialog.querySelector('[data-setup-next]');
+        var KEY = 'ugc.setupGuide.done';
+        var i = 0;
+        steps.forEach(function (_, n) { var d = document.createElement('span'); d.className = 'setup-dot'; d.dataset.n = n; dots.appendChild(d); });
+        function show(n) {
+            i = Math.max(0, Math.min(steps.length - 1, n));
+            steps.forEach(function (s, k) { s.hidden = k !== i; });
+            Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('active', k === i); d.classList.toggle('seen', k < i); });
+            label.textContent = 'Step ' + (i + 1) + ' of ' + steps.length;
+            prev.disabled = i === 0;
+            next.textContent = i === steps.length - 1 ? 'Done' : '›';
+            next.setAttribute('aria-label', i === steps.length - 1 ? 'Finish' : 'Next step');
+            dialog.querySelector('.modal').scrollTop = 0;
+        }
+        function open(from) { show(from || 0); if (!dialog.open) dialog.showModal(); }
+        function finish() { try { localStorage.setItem(KEY, '1'); } catch (e) {} dialog.close(); }
+        prev.addEventListener('click', function () { show(i - 1); });
+        next.addEventListener('click', function () { if (i === steps.length - 1) finish(); else show(i + 1); });
+        dialog.querySelector('[data-setup-close]').addEventListener('click', finish);
+        dialog.addEventListener('cancel', function (e) { e.preventDefault(); finish(); });
+        dialog.addEventListener('keydown', function (e) {
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+            if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+        });
+        Array.prototype.forEach.call(dots.children, function (d) { d.addEventListener('click', function () { show(Number(d.dataset.n)); }); });
+        document.getElementById('open-setup-guide').addEventListener('click', function () { open(0); });
+        // Copy buttons: prefetch each prompt so the clipboard write happens
+        // synchronously inside the click (browsers drop the gesture after an await).
+        Array.prototype.forEach.call(dialog.querySelectorAll('[data-copy-prompt]'), function (btn) {
+            var row = btn.parentNode;
+            var status = row.querySelector('[data-copy-status]');
+            var box = row.parentNode.querySelector('[data-prompt-box]');
+            var text = '';
+            fetch(btn.dataset.copyPrompt, { cache: 'no-cache' }).then(function (r) { return r.text(); })
+                .then(function (t) { text = t; box.value = t; }).catch(function () {});
+            btn.addEventListener('click', function () {
+                if (!text) { status.textContent = 'Still loading — try again in a second.'; return; }
+                var p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject();
+                p.then(function () { status.textContent = 'Copied — paste it into Claude.'; box.hidden = true; })
+                 .catch(function () { box.hidden = false; box.focus(); box.select(); status.textContent = 'Select-all is done — press ⌘C to copy.'; });
+            });
+        });
+        var seen = false;
+        try { seen = localStorage.getItem(KEY) === '1'; } catch (e) {}
+        if (!seen) open(0);
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tasks · iOS Agents</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-text">
+                    <span class="brand-name">iOS Agents</span>
+                </span>
+            </a>
+            <nav class="topbar-nav"><a class="button secondary" href="/">Devices</a><a class="button secondary" href="/automations">Automations</a><a class="crumb" href="/tasks" aria-current="page">Tasks</a><button id="refresh-tasks" class="button secondary" type="button">Refresh</button>__PLUGIN_NAV____AUTH_NAV__</nav>
+        </div>
+    </header>
+    <main class="shell">
+        <header class="page-header">
+            <div><h1>Everything in motion.</h1><p>Schedules and execution history across every device.</p></div>
+        </header>
+        <section class="panel task-section">
+            <div class="section-heading"><div><h2>Schedules</h2></div></div>
+            <div id="schedules" class="task-list loading-card"><span class="spinner"></span>Loading schedules…</div>
+        </section>
+        <section class="panel task-section">
+            <div class="section-heading"><div><h2>Executions</h2></div></div>
+            <div id="executions" class="task-list loading-card"><span class="spinner"></span>Loading executions…</div>
+        </section>
+    </main>
+    <script type="module" src="/assets/tasks.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+devices.json
+.wda/
+.scheduler-data/
+static/assets/
+*.log
+.appium2/
+logs/
+
+# Cold DM lead contact state (per-run outcomes; keep local)
+data/leads/state/
+
+# Hinge shadow-mode captures (screenshots of other people; keep local)
+data/hinge/
+# LinkedIn tour captures
+data/linkedin/
+
+# UGC reel pipeline (ugc/): per-machine session ids and post logs
+ugc/.wda_session
+ugc/.palmier_session
+ugc/runs/*
+!ugc/runs/.gitkeep
+ugc/__pycache__/
+
+# Scraped lead lists contain other people's handles — never publish them
+data/leads/*.json

@@ -1,0 +1,11 @@
+{
+  "title": "Inspect the current Edits project",
+  "steps": [
+    {
+      "id": "check-editor",
+      "op": "jev",
+      "expected": ["timeline", "text_selected", "audio_selected", "audio_fades", "text_editor"]
+    },
+    { "id": "visual-review", "op": "review" }
+  ]
+}

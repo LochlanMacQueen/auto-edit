@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import {
+    CALIBRATABLE_POINTS, coordinatesForProfile, resolveDeviceCoordinates, validateCoordinateOverrides,
+} from '../src/devices/coordinates.js';
+
+test('resolveDeviceCoordinates applies single-tap overrides over the profile', () => {
+    const base = coordinatesForProfile('iphone8');
+    assert.equal(resolveDeviceCoordinates('iphone8', undefined), base);
+
+    const resolved = resolveDeviceCoordinates('iphone8', { like: { x: 350, y: 320 } });
+    assert.deepEqual(resolved.tiktok.like, { x: 350, y: 320 });
+    assert.deepEqual(resolved.tiktok.save, base.tiktok.save, 'untouched points keep the profile value');
+    assert.deepEqual(resolved.tiktok.picker, base.tiktok.picker, 'non-calibratable fields are untouched');
+});
+
+test('validateCoordinateOverrides enforces known keys, numbers and screen bounds', () => {
+    assert.deepEqual(validateCoordinateOverrides({ like: { x: 10.6, y: 20.2 } }, 'iphone8'), { like: { x: 11, y: 20 } });
+    assert.throws(() => validateCoordinateOverrides({ nope: { x: 1, y: 1 } }, 'iphone8'), /Unknown calibratable point/);
+    assert.throws(() => validateCoordinateOverrides({ like: { x: 1, y: 999 } }, 'iphone8'), /outside the 375×667 screen/);
+    assert.throws(() => validateCoordinateOverrides({ like: { x: 'a', y: 1 } }, 'iphone8'), /must be numbers/);
+    assert.throws(() => validateCoordinateOverrides([], 'iphone8'), /must be an object/);
+});
+
+test('every calibratable point exists on the profile', () => {
+    const tiktok = coordinatesForProfile('iphone8').tiktok;
+    for (const name of CALIBRATABLE_POINTS) {
+        const point = tiktok[name];
+        assert.equal(typeof point.x, 'number', name);
+        assert.equal(typeof point.y, 'number', name);
+    }
+});
+
+test('every profile ships a LinkedIn map', () => {
+    for (const profile of ['iphone8', 'iphoneX', 'iphone13', 'iphone17pro'] as const) {
+        const linkedin = coordinatesForProfile(profile).linkedin;
+        assert.equal(linkedin.homeTab.x > 0, true, profile);
+        assert.equal(typeof linkedin.connect.x, 'number', profile);
+        assert.equal(typeof linkedin.sendInvitation.y, 'number', profile);
+    }
+});
+
+test('resolveDeviceCoordinates applies LinkedIn overrides', () => {
+    const resolved = resolveDeviceCoordinates('iphone13', { connect: { x: 100, y: 300 } }, 'linkedin');
+    assert.deepEqual(resolved.linkedin.connect, { x: 100, y: 300 });
+    assert.deepEqual(resolved.linkedin.homeTab, coordinatesForProfile('iphone13').linkedin.homeTab);
+});
