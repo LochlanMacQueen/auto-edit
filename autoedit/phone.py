@@ -144,6 +144,10 @@ def _loop():
 def _run(j):
     from . import review as R
     j["status"] = "running"; j["stage"] = "edits"; _save()
+    st = _wda_status()
+    if not st.get("ready"):
+        raise RuntimeError(f"phone bridge offline ({st.get('error', 'WebDriverAgent not ready')}). "
+                           "Plug the iPhone in and make sure `npm run appium` and `npm run wda:service` are running (dashboard → Phone).")
     hp = HOME / "tmp" / f"headers-{j['id']}.json"
     hp.write_text(json.dumps({j["id"]: j["headers"]}))
     cmd = [sys.executable, "-u", str(UGC / "edits_pipeline.py"), j["video"], j["id"],

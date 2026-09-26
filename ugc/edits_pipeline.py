@@ -112,7 +112,11 @@ def open_edits_fresh(take_over=None):
                 phone.tap(keep["x"], keep["y"]); time.sleep(3)
         else:
             phone.launch(EDITS); time.sleep(4)
-    raise RuntimeError("could not reach the Edits Projects screen")
+    pills = [str(n.get("label")) for n in phone.elements() if n.get("type") == "Button"
+             and 470 < (n.get("rect") or {}).get("y", 0) < 720 and n.get("label") and n["label"] not in ("Hide", "Mute")]
+    raise RuntimeError("Instagram Edits is busy with an open project (timeline shows: "
+                       + ", ".join(repr(x)[:40] for x in pills[:3]) + "). Someone else is editing on this phone — "
+                       "finish that first, then re-queue.")
 
 
 def new_project_from_newest():
