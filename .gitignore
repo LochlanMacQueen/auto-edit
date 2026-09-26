@@ -28,3 +28,6 @@ ugc/__pycache__/
 
 # Scraped lead lists contain other people's handles — never publish them
 data/leads/*.json
+
+__pycache__/
+.venv/
