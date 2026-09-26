@@ -303,7 +303,7 @@ def _page():
 
 @mcp.custom_route("/", methods=["GET"])
 async def home(_: Request):
-    return HTMLResponse(_page())
+    return HTMLResponse(_page(), headers={"cache-control": "no-store"})
 
 
 @mcp.custom_route("/api/status", methods=["GET"])
