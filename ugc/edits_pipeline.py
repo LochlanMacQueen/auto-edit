@@ -86,9 +86,12 @@ def import_video(path):
     time.sleep(3)
 
 
-def open_edits_fresh():
+def open_edits_fresh(take_over=None):
     """A WDA session is created BEFORE Edits opens: creating one mid-edit throws
-    the app to the home screen and loses the editor."""
+    the app to the home screen and loses the editor. If Edits already has a
+    project open it is someone's work: refuse unless take_over (AUTOEDIT_TAKE_OVER=1)."""
+    if take_over is None:
+        take_over = os.environ.get("AUTOEDIT_TAKE_OVER") == "1"
     if not phone.session():
         phone.start_session()
     phone.launch(EDITS)
@@ -100,12 +103,16 @@ def open_edits_fresh():
             phone.tap(20, 60); time.sleep(4)
         c = phone.find("Close project")
         if c:
+            if not take_over:
+                raise RuntimeError("Instagram Edits has a project open on the phone. Finish or close it, "
+                                   "or re-queue the job with take_over=true.")
             phone.tap(c["x"], c["y"]); time.sleep(3)
-            keep = phone.find("Save") or phone.find("Keep")
+            keep = phone.find("Save") or phone.find("Keep") or phone.find("Save draft")
             if keep:
                 phone.tap(keep["x"], keep["y"]); time.sleep(3)
         else:
             phone.launch(EDITS); time.sleep(4)
+    raise RuntimeError("could not reach the Edits Projects screen")
 
 
 def new_project_from_newest():

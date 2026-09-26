@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>auto-edit</title>
+<style>
+:root{--bg:#0b0c10;--card:#12131a;--line:#262633;--text:#e8e8ee;--muted:#9a9aab;--accent:#aaa0ff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#f5c451}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,Inter,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)}
+header b{font-size:16px}nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}nav a.on{color:var(--text);background:#1b1c26}
+main{max-width:1080px;margin:0 auto;padding:22px}h1{font-size:22px;margin:0 0 6px}h2{font-size:15px;margin:22px 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:10px 0}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.grow{flex:1}.muted{color:var(--muted)}small{color:var(--muted)}
+button,.btn{background:#1b1c26;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 14px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+button.primary,.btn.primary{background:var(--accent);color:#111;border-color:transparent;font-weight:600}button.danger{border-color:var(--bad);color:var(--bad)}
+pre,code{background:#0b0c10;border:1px solid var(--line);border-radius:8px;font:12.5px ui-monospace,Menlo,monospace}pre{padding:10px 12px;overflow:auto;white-space:pre-wrap}code{padding:1px 5px}
+.ok::before{content:"● ";color:var(--ok)}.bad::before{content:"● ";color:var(--bad)}.pending::before{content:"● ";color:var(--warn)}
+textarea{width:100%;min-height:70px;background:#0b0c10;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit}
+video{width:100%;max-width:340px;border-radius:10px;background:#000}.shots img{height:220px;border-radius:8px;margin:4px;border:1px solid var(--line)}
+.steps{counter-reset:s}.step{position:relative;padding-left:44px;margin:16px 0}.step::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#1b1c26;border:1px solid var(--line);display:grid;place-items:center;color:var(--accent);font-weight:700}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#1b1c26;border:1px solid var(--line);color:var(--muted)}
+#phoneimg{width:280px;border-radius:14px;border:1px solid var(--line);background:#000}
+</style></head><body>
+<header><b>auto-edit</b><nav id="nav"><a href="#setup">Setup</a><a href="#review">Review</a><a href="#queue">Queue</a><a href="#phone">Phone</a><a href="#connect">Connect</a></nav><span class="grow"></span><span id="pill" class="tag">…</span></header>
+<main id="main"></main>
+<script>
+const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const j=async(u,o)=>(await fetch(u,o)).json();const fmt=t=>t?new Date(t*1000).toLocaleString():'';
+let status={},info={};
+async function load(){status=await j('/api/status');info=await j('/connect/info');$('#pill').textContent=status.ready_to_post?'ready':(status.ok?'editor ready · phone off':'setup needed');$('#pill').className='tag '+(status.ready_to_post?'ok':status.ok?'pending':'bad');route();}
+function route(){const h=(location.hash||'#setup').slice(1);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+h));({setup,review,queue,phone,connect}[h]||setup)();}
+function setup(){const s=status;const chk=(ok,l)=>`<div class="${ok?'ok':'bad'}">${l}</div>`;
+$('#main').innerHTML=`<h1>Reels, edited and posted by your AI.</h1><p class="muted">Put your takes in a folder, tell Claude or ChatGPT what you want, review, post. Everything below is set up once.</p>
+<div class="card steps">
+<div class="step"><b>Let your agent finish the setup.</b><br><small>Connect Claude (see <a href="#connect">Connect</a>), then say: <i>“Run setup_status and walk me through anything that isn’t ready.”</i> The agent knows every step.</small></div>
+<div class="step"><b>Palmier Pro</b> — <a href="https://github.com/palmier-io/palmier-pro/releases/latest/download/PalmierPro.dmg">download</a>, open it, keep it open. It’s the editor; the agent drives it. ${chk(s.palmier_pro,'Palmier Pro MCP on :19789')}</div>
+<div class="step"><b>Media tools</b> — <code>brew install ffmpeg</code> and whisper (installed by install.sh). ${chk(s.ffmpeg,'ffmpeg')} ${chk(s.whisper,'whisper (mlx)')}</div>
+<div class="step"><b>Your iPhone</b> — latest iOS, Developer Mode on, USB, Instagram Edits + Instagram logged in. The bridge (WebDriverAgent) is installed from the phone-farm dashboard for now (<code>npm run wda:prepare</code> → <code>npm run wda:service</code>, Xcode needed). ${chk(s.phone&&s.phone.ready,'bridge on :8100'+(s.phone&&s.phone.ios?' · iOS '+s.phone.ios:''))}</div>
+<div class="step"><b>Make a reel.</b> Folder of takes + images + song → tell the agent exactly what you want → it hands the clean cut to <a href="#review">Review</a> → approve → it adds captions/headers in Edits (native fonts) → posts from Instagram.</div>
+</div><div class="row"><button onclick="load()">Re-check</button><span class="muted">data: ${esc(s.home)}</span></div>`;}
+async function review(){const items=await j('/api/review');$('#main').innerHTML=`<h1>Review</h1><p class="muted">Finished videos wait here. Watch, then approve or send notes back — the agent is polling for your decision.</p>`+(items.length?'':'<div class="card muted">Nothing to review yet.</div>')+items.map(i=>`<div class="card"><div class="row"><span class="${i.status==='approved'?'ok':i.status==='pending'?'pending':'bad'}"><b>${esc(i.title)}</b></span><span class="tag">${i.status}</span><span class="muted">${fmt(i.created)}</span></div>
+<div class="row" style="align-items:flex-start;margin-top:10px"><video controls preload="metadata" src="/file?path=${encodeURIComponent(i.video)}"></video><div class="grow"><pre>${esc(i.notes)}</pre>${i.images&&i.images.length?'<div class="shots">'+i.images.map(p=>`<img src="/file?path=${encodeURIComponent(p)}">`).join('')+'</div>':''}
+${i.status==='pending'?`<textarea id="fb-${i.id}" placeholder="Feedback (what to change, as specific as you can)"></textarea><div class="row" style="margin-top:8px"><button class="primary" onclick="decide('${i.id}','approved')">Approve</button><button onclick="decide('${i.id}','changes')">Request changes</button></div>`:`<div class="muted">${i.feedback?'Feedback: '+esc(i.feedback):''} ${fmt(i.decided)}</div>`}</div></div></div>`).join('');}
+async function decide(id,st){const fb=($('#fb-'+id)||{}).value||'';await j('/api/review/'+id+'/decide',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({status:st,feedback:fb})});review();}
+async function queue(){const q=await j('/api/queue');$('#main').innerHTML=`<h1>Posting queue</h1><p class="muted">Each job: Edits captions + headers → export → Instagram composer → (review) → share at its time. One at a time.</p>`+(q.length?'':'<div class="card muted">No jobs.</div>')+q.slice().reverse().map(x=>`<div class="card"><div class="row"><span class="${x.status==='done'?'ok':['failed','cancelled','changes_requested'].includes(x.status)?'bad':'pending'}"><b>${esc(x.title)}</b></span><span class="tag">${x.status}${x.stage?' · '+x.stage:''}</span><span class="tag">${x.mode}</span>${x.not_before?`<span class="muted">not before ${fmt(x.not_before)}</span>`:''}${x.shared_at?`<span class="muted">shared ${fmt(x.shared_at)}</span>`:''}<span class="grow"></span>${['queued','waiting_review','waiting_time'].includes(x.status)?`<button class="danger" onclick="cancel('${x.id}')">Cancel</button>`:''}</div><pre>${esc((x.log||[]).slice(-8).join('\n'))}</pre></div>`).join('');}
+async function cancel(id){await j('/api/queue/'+id+'/cancel',{method:'POST'});queue();}
+function phone(){const s=status.phone||{};$('#main').innerHTML=`<h1>Phone</h1><div class="row" style="align-items:flex-start"><img id="phoneimg" src="/phone/shot.jpg?${Date.now()}" onerror="this.alt='bridge offline'"><div class="grow"><div class="card">${s.ready?`<div class="ok">bridge ready · iOS ${esc(s.ios)} · app ${esc(s.active_app||'')}</div>`:`<div class="bad">bridge offline — ${esc(s.error||'start WebDriverAgent')}</div>`}<p class="muted">Live view refreshes every 3 s while this tab is open. The agent drives Instagram Edits and Instagram here; you can watch but don’t touch the phone during a job.</p></div></div></div>`;
+clearInterval(window._ph);window._ph=setInterval(()=>{if(location.hash!=='#phone')return clearInterval(window._ph);const im=$('#phoneimg');if(im)im.src='/phone/shot.jpg?'+Date.now();},3000);}
+function connect(){$('#main').innerHTML=`<h1>Connect an agent</h1>
+<div class="card"><b>Claude Desktop</b><p>Download the extension and double-click it (Settings → Extensions). Then just talk to Claude.</p><a class="btn primary" href="/connect/auto-edit.mcpb">Download auto-edit.mcpb</a></div>
+<div class="card"><b>Claude Code</b><pre>${esc(info.claude_code)}</pre></div>
+<div class="card"><b>ChatGPT</b><p class="muted">ChatGPT only reaches servers on the public internet, so expose this one through a tunnel while you work:</p><pre>${esc(info.chatgpt)}</pre></div>
+<div class="card"><b>Anything else (Cursor, Codex, …)</b><pre>${esc(info.mcp_url)}</pre></div>`;}
+window.addEventListener('hashchange',route);load();setInterval(()=>{const ta=[...document.querySelectorAll('textarea')];if(document.activeElement&&document.activeElement.tagName==='TEXTAREA')return;if(ta.some(t=>t.value.trim()))return;if(['#review','#queue'].includes(location.hash))route();},8000);
+</script></body></html>

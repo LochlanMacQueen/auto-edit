@@ -1,29 +1,54 @@
 # auto-edit
 
-Raw talking-head takes in, finished captioned reels posted from your iPhone out — edited by Claude in Palmier Pro and Instagram Edits, in your format, every time. Built on Phone Farm iOS.
+Raw talking-head takes in, finished captioned reels posted from your iPhone out — edited by Claude or ChatGPT through one MCP server, in your format, every time. Captions and headers are **native Instagram Edits text** and the reel is **shared from the Instagram app**, because that's what gets reach.
 
-An open-source, standalone application for operating physical iOS devices and running scheduled TikTok and Instagram workflows. It includes guided device registration, WDA/Appium supervision, live video and remote input, PostgreSQL-backed scheduling, recurring jobs, uploads, execution history, the dashboard/API server, and built-in TikTok + Instagram automation plugins.
+**Landing page:** `site/index.html` · **Dashboard:** http://127.0.0.1:4747 · **License:** GPL-3.0 (built on Palmier Pro and Phone Farm iOS)
 
-It runs locally as-is; authentication is optional on a loopback bind. Harden it for a shared or exposed deployment by supplying your own `AuthProvider` (`PHONE_FARM_AUTH_PLUGIN`) and process supervision — no fork required. Tasks are persisted as `pluginId`, `taskType`, `taskVersion`, and a JSON payload, so an old schedule can never silently execute a new contract.
+## Install
 
-> Live demo and setup walkthrough: **[gethandler.ai/ios-farm](https://gethandler.ai/ios-farm)**
+```sh
+curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash
+```
 
-## Make reels with Claude (Palmier Pro → iPhone → Instagram Edits → Instagram)
+Apple Silicon Mac on macOS 26. The installer brings ffmpeg, Python, whisper, starts the auto-edit server as a launchd agent, builds the Claude Desktop extension and opens the dashboard. Then:
 
-This fork adds a repeatable UGC pipeline: raw talking-head takes in, finished captioned
-reels posted from a real iPhone out, in your format. Claude does the operating.
+1. Install [Palmier Pro](https://github.com/palmier-io/palmier-pro/releases/latest/download/PalmierPro.dmg) and keep it open (it's the editor; the agent drives it over MCP).
+2. Dashboard → **Connect** → add auto-edit to Claude Desktop (`~/AutoEdit/auto-edit.mcpb`, double-click), or Claude Code (`claude mcp add --transport http auto-edit http://127.0.0.1:4747/mcp`), or ChatGPT (through a `cloudflared` tunnel).
+3. Say to your agent: *"Run setup_status and walk me through anything that isn't ready."* It finishes the setup with you, including the iPhone bridge.
 
-1. Run the dashboard (below) and open <http://127.0.0.1:3000>. The **Setup guide** opens on
-   first launch. Step 1 hands you [`ugc/SETUP_PROMPT.md`](ugc/SETUP_PROMPT.md) — paste it into
-   Claude Code with this repo attached and Claude sets up Xcode, the phone, Palmier Pro and
-   this dashboard with you.
-2. Put your takes, images and song in a folder. Paste [`ugc/AGENT_PROMPT.md`](ugc/AGENT_PROMPT.md)
-   into Claude and tell it exactly what you want.
-3. Review the video Claude hands back (sound is baked in from Palmier); iterate until right.
-4. Send it to Instagram Edits — tell Claude the on-screen text; it will pause and ask specifics.
-5. Have it post. Every video after the first is one command.
+## How you use it
 
-Everything for this lives in [`ugc/`](ugc/README.md).
+1. **Put your files in a folder** — takes, images, a song, a reference reel if you have one.
+2. **Tell the agent exactly what you want** — structure, what's on screen when, music, length, what must never happen. First time it asks; after that it remembers the format.
+3. **Review** — the clean cut lands in the dashboard's Review tab. Approve or send notes; the agent is waiting on your decision.
+4. **Edits + post** — the agent asks once how headers/captions should look, then runs each video through Instagram Edits on your phone (native fonts, Classic + Outline by default), parks it for a final look, and shares it from Instagram — normal or trial reel, spaced however you asked. Sound is baked in during the edit, never added in Edits.
+
+## What's inside
+
+| Path | What it is |
+| --- | --- |
+| `autoedit/` | The MCP server + dashboard (Python, `mcp` 2.x). `server.py` is the tool surface (29 tools: setup, project/transcribe/dead-space, overlays, Palmier proxy + `build_timeline`, export/bake/verify, formats, review, phone jobs, posting queue). `AGENT.md` is what the agent reads on connect. |
+| `mcpb-autoedit/` | Claude Desktop extension (stdio → local HTTP shim). |
+| `ugc/` | The iPhone recipes the server runs: `edits_pipeline.py` (Edits captions + header tracks + export + Instagram composer), `phone.py` (WebDriverAgent driver), the runbooks. |
+| `install.sh`, `site/` | Installer and landing page. |
+| everything else | Phone Farm iOS — the dashboard that builds/supervises WebDriverAgent on the phone. Still the way the bridge is installed today (needs Xcode); an in-app signing flow is the planned replacement. |
+
+## Agent tool surface (short)
+
+`setup_status` · `setup_guide` · `project_create` · `takes_overview` · `transcribe` · `rename_take` · `speech_spans` (dead space + per-span isolation transcript: flags breaths, whisper hallucinations and false starts) · `overlay_band` · `overlay_fit` · `palmier_tools` · `palmier` (any Palmier Pro tool) · `build_timeline` (one plan → whole timeline, returns section boundaries) · `export_timeline` · `bake` (first-frame trim, fps, music) · `verify_video` · `video_frame` · `contact_sheet` · `format_save` / `format_list` · `review_submit` / `review_wait` / `review_list` · `phone_status` · `phone_screenshot` · `reel_job` (Edits → composer → review gate → share at time, normal/trial) · `job_status` · `queue_list` · `job_cancel`
+
+## Running it by hand
+
+```sh
+.venv/bin/python -m autoedit serve            # foreground server on :4747
+.venv/bin/python -m autoedit status           # same as setup_status
+.venv/bin/python -m autoedit mcpb             # rebuild ~/AutoEdit/auto-edit.mcpb
+tests/mcp_call.py speech_spans '{"path":"~/Reels/x/take.MOV"}'   # call any tool from a shell
+```
+
+Data lives in `~/AutoEdit` (projects, review items, jobs, formats, post log). Per-project outputs go to `<your folder>/auto-edit/{overlays,exports,finished}`.
+
+## Phone Farm iOS (the bridge)
 
 ## Documentation
 

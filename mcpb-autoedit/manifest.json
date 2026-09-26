@@ -1,0 +1,13 @@
+{
+  "manifest_version": "0.3",
+  "name": "auto-edit",
+  "display_name": "auto-edit",
+  "version": "0.1.0",
+  "description": "Turn raw takes into finished reels: Palmier Pro edit, Instagram Edits captions on your iPhone, review, scheduled posting.",
+  "long_description": "Connects Claude Desktop to the auto-edit server running on this Mac (http://127.0.0.1:4747). Claude can transcribe takes, cut dead space, build the timeline in Palmier Pro, export and bake music, send the video to Review, then run it through Instagram Edits on your iPhone and post it.",
+  "author": {"name": "auto-edit", "url": "https://github.com/LochlanMacQueen/auto-edit"},
+  "homepage": "https://github.com/LochlanMacQueen/auto-edit",
+  "keywords": ["video", "reels", "instagram", "editing"],
+  "compatibility": {"platforms": ["darwin"], "runtimes": {"node": ">=18.0.0"}},
+  "server": {"type": "node", "entry_point": "server/index.js", "mcp_config": {"command": "node", "args": ["${__dirname}/server/index.js"]}}
+}
