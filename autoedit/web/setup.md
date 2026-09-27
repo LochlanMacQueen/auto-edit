@@ -1,7 +1,23 @@
 # auto-edit setup (once)
 
-1. **Palmier Pro** — install from https://github.com/palmier-io/palmier-pro/releases/latest/download/PalmierPro.dmg (macOS 26, Apple Silicon), open it, leave it open. Its MCP server must answer on 127.0.0.1:19789 (`setup_status` → palmier_pro: true).
-2. **ffmpeg + whisper** — `brew install ffmpeg`; whisper (mlx-whisper) is installed into the auto-edit venv by install.sh. First transcription downloads the model (~500 MB) — start early.
-3. **iPhone** — latest iOS; Settings → Privacy & Security → Developer Mode on (restart); USB; Trust This Computer; Instagram Edits and Instagram installed and logged in.
-4. **Phone bridge (WebDriverAgent)** — today this still comes from the phone-farm dashboard in this repo (needs Xcode): `npm install && npm run appium:install-driver && cp .env.example .env` (set IOS_PLATFORM_VERSION, XCODE_ORG_ID, WDA_BUNDLE_ID) → `npm run wda:prepare` → keep `npm run wda:service` running. `phone_status` → ready: true. A signing flow that removes the Xcode requirement is planned.
-5. **Connect the agent** — auto-edit window → Connect (Add to Claude Desktop / Claude Code command / ChatGPT tunnel). When the person says "set up the iPhone bridge", do step 4 for them end to end and confirm with phone_status.
+If you installed the **auto-edit app** (the DMG), the editor, ffmpeg, whisper and this server are
+already inside it — skip to step 3. Steps 1–2 are only for running the server on its own.
+
+1. **Editor** — built into the auto-edit app. (Server-only installs: install Palmier Pro from
+   https://github.com/palmier-io/palmier-pro/releases and keep it open; its MCP must answer on 127.0.0.1:19789.)
+2. **Media tools** — built into the app. (Server-only: `brew install ffmpeg`; whisper comes with install.sh.)
+   The first transcription downloads the speech model (~500 MB) — start early.
+3. **iPhone** — latest iOS; Settings → Privacy & Security → Developer Mode → on (restart); plug in by USB;
+   tap Trust This Computer; install Instagram Edits and Instagram, logged into the account you post from.
+   Turn on a Focus / Do Not Disturb mode while auto-edit is driving the phone — notification banners can steal taps.
+4. **Phone bridge (WebDriverAgent)** — needs Xcode (full app, latest) and your Apple ID in Xcode → Settings → Accounts.
+   ```
+   git clone https://github.com/LochlanMacQueen/auto-edit ~/auto-edit && cd ~/auto-edit
+   npm install && npm run appium:install-driver && cp .env.example .env
+   # in .env set IOS_PLATFORM_VERSION (the phone's iOS), XCODE_ORG_ID (your Team ID), WDA_BUNDLE_ID (any id you own)
+   npm run db:up && npm run db:migrate && npm run wda:prepare     # must end with ** TEST BUILD SUCCEEDED **
+   npm run appium      # keep running
+   npm run wda:service # keep running
+   ```
+   `phone_status` → ready: true when it works.
+5. **Connect your agent** — auto-edit window → Connect → Add to Claude Desktop (or the Claude Code command, or a ChatGPT tunnel).

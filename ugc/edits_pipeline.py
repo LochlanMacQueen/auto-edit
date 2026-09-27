@@ -22,6 +22,7 @@ edits_text.py / edits_headers2.py; the runbook is docs/edits-app-runbook.md.
 import base64
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -33,6 +34,7 @@ import edits_headers2 as H  # noqa: E402
 
 EDITS = "com.burbn.basel"
 INSTAGRAM = "com.burbn.instagram"
+EXPECTED_DURATION = None           # set from the video file in __main__
 WDA = phone.WDA
 
 
@@ -76,14 +78,35 @@ def import_video(path):
     data = open(path, "rb").read()
     body = json.dumps({"name": os.path.basename(path), "mimeType": "video/mp4",
                        "data": base64.b64encode(data).decode()})
-    tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "runs", "_import.json")
+    tmp = os.path.join(phone._state_dir(), "_import.json")
     open(tmp, "w").write(body)
-    out = subprocess.run(["curl", "-s", "--max-time", "300", "-X", "POST", f"{WDA}/wda/import-media",
-                          "-H", "content-type: application/json", "--data-binary", "@" + tmp],
-                         capture_output=True, text=True).stdout
-    os.remove(tmp)
-    log("import:", out.replace("\n", "")[:120])
-    time.sleep(3)
+    try:
+        for attempt in range(1, 4):
+            out = subprocess.run(["curl", "-s", "--max-time", "300", "-X", "POST", f"{WDA}/wda/import-media",
+                                  "-H", "content-type: application/json", "--data-binary", "@" + tmp],
+                                 capture_output=True, text=True).stdout
+            log("import:", out.replace("\n", "")[:120])
+            try:
+                ok = "error" not in (json.loads(out).get("value") or {})
+            except Exception:
+                ok = False
+            if ok:
+                time.sleep(3); return
+            time.sleep(10 * attempt)                       # iCloud/Photos hiccup: wait and retry
+        raise RuntimeError("Photos import failed 3 times — refusing to build on whatever video is newest")
+    finally:
+        os.remove(tmp)
+
+
+def cancel_photo_picker():
+    """An iOS Photos picker (Cancel / Photos / Collections / Done) left open over Edits
+    swallows every tap; the Projects screen still reads as visible underneath."""
+    for _ in range(3):
+        if not phone.find("Collections", exact=True):
+            return
+        c = [n for n in phone.elements() if n.get("label") == "Cancel" and n.get("type") == "Button"]
+        if c:
+            r = c[0]["rect"]; phone.tap(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2); time.sleep(2)
 
 
 def open_edits_fresh(take_over=None):
@@ -96,7 +119,16 @@ def open_edits_fresh(take_over=None):
         phone.start_session()
     phone.launch(EDITS)
     time.sleep(5)
-    for _ in range(4):
+    for _ in range(6):
+        cancel_photo_picker()
+        if phone.find("Apply to track"):                     # text editor left open: commit and close it
+            ds = [n for n in phone.elements() if n.get("label") == "Done" and n.get("type") == "Button"
+                  and (n.get("rect") or {}).get("y", 999) < 100]
+            if ds:
+                r = ds[0]["rect"]; phone.tap(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2); time.sleep(2.5)
+            b = phone.find("back-button")
+            if b:
+                phone.tap(b["x"], b["y"]); time.sleep(1.5)
         if phone.find("Projects", exact=True):
             return
         if phone.find("Choose where to share"):        # post-export share sheet: back to the editor
@@ -120,13 +152,29 @@ def open_edits_fresh(take_over=None):
 
 
 def new_project_from_newest():
-    phone.tap(342, 699); time.sleep(3)                    # +
-    g = wait_for("Gallery", 10)
+    g = None
+    for _ in range(3):                                     # recover from a half-open sheet
+        cancel_photo_picker()
+        if not phone.find("Projects", exact=True):
+            open_edits_fresh(take_over=True)
+        phone.tap(342, 699); time.sleep(3)                # +
+        g = wait_for("Gallery", 10)
+        if g:
+            break
+        cancel_photo_picker()                             # a stray picker swallows the + tap
+    if not g:
+        raise RuntimeError("Edits never showed the Gallery picker")
     phone.tap(g["x"], g["y"]); time.sleep(5)
     phone.tap(62, 202); time.sleep(2)                     # newest cell
     phone.tap(352, 94); time.sleep(10)                    # blue check
     if not wait_for("Next", 30, kind="Button"):
         raise RuntimeError("editor did not open")
+    if EXPECTED_DURATION:                                   # the newest gallery video must be THIS video
+        clock = [str(n.get("label")) for n in phone.elements() if re.fullmatch(r"\d\d:\d\d, \d\d:\d\d", str(n.get("label") or ""))]
+        if clock:
+            mm, ss = clock[0].split(", ")[1].split(":"); shown = int(mm) * 60 + int(ss)
+            if abs(shown - EXPECTED_DURATION) > 1.5:
+                raise RuntimeError(f"new project is {shown}s but the video is {EXPECTED_DURATION:.1f}s — wrong video picked")
     log("project open")
 
 
@@ -233,6 +281,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 3 or sys.argv[1].startswith("--"):
         print(__doc__); sys.exit(2)
     video, key = sys.argv[1], sys.argv[2]
+    EXPECTED_DURATION = duration_of(video)
     headers_path = arg("--headers", os.environ.get("UGC_HEADERS", "headers.json"))
     spec = json.load(open(headers_path))[key]
     caption = arg("--caption", spec.get("caption", ""))
@@ -258,9 +307,16 @@ if __name__ == "__main__":
     else:
         if "--no-import" not in sys.argv:
             import_video(video)
-        open_edits_fresh()
-        new_project_from_newest()
-        captions()
-        headers(spec, video)
+        for attempt in (1, 2):
+            open_edits_fresh(take_over=True if attempt == 2 else None)
+            new_project_from_newest()
+            captions()
+            try:
+                headers(spec, video)
+                break
+            except (H.HeaderLost, T.AppLeft) as e:
+                if attempt == 2:
+                    raise
+                log("!! header lost:", e, "— exiting this project and starting a new one from the same video")
     export_and_compose(caption, post=post)
     log("DONE %s in %.0fs" % (key, time.time() - t0))

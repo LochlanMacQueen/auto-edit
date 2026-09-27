@@ -324,7 +324,20 @@ def wait_keyboard(timeout=15):
 
 
 # ---------------------------------------------------------------- session (create ONCE, before opening the app)
-SESSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".wda_session")
+
+def _state_dir():
+    """Where runtime state goes. Inside the installed app the bundle is read-only (and
+    writing to it breaks its signature), so use ~/AutoEdit there."""
+    d = os.environ.get("AUTOEDIT_HOME")
+    if not d and "/Contents/Resources/" in os.path.abspath(__file__):
+        d = os.path.join(os.path.expanduser("~"), "AutoEdit")
+    if not d:
+        d = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+SESSION_FILE = os.path.join(_state_dir(), ".wda_session")
 
 
 def start_session(bundle=None, timeout_s=3600):

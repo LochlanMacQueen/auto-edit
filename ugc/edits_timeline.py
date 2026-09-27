@@ -5,6 +5,7 @@ Track y MOVES: the header track is y=563 normally, 583 with the context
 toolbar showing, and extra overlay tracks appear at 543 and above. Every helper
 here re-reads the tracks each call.
 """
+import json
 import os
 import sys
 import time
@@ -22,7 +23,24 @@ TOOLBAR = {"Split", "Edit", "Copy", "Delete", "Duplicate", "Opacity", "Text to s
            "Links", "Captions", "Filters", "Play"}
 
 
+class AppLeft(RuntimeError):
+    """Edits is no longer in front — e.g. a system banner took a tap and opened Settings."""
+
+
+EDITS_BUNDLE = "com.burbn.basel"
+
+
+def front_app():
+    try:
+        return json.loads(phone._curl("/wda/activeAppInfo")).get("value", {}).get("bundleId")
+    except Exception:
+        return None
+
+
 def rows():
+    front = front_app()
+    if front and front != EDITS_BUNDLE:
+        raise AppLeft(f"{front} is in front, not Instagram Edits")
     out = []
     for n in phone.elements():
         lbl = str(n.get("label") or "")

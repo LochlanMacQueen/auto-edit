@@ -19,4 +19,4 @@ acct=[n['label'] for n in phone.elements() if 'Also share on' in str(n.get('labe
 s=phone.find('Share',exact=True,kind='Button'); phone.tap(s['x'],s['y']); time.sleep(8)
 labs=[n['label'] for n in phone.elements() if n.get('type') in ('Button','StaticText') and n.get('label')]
 print(time.strftime('%H:%M:%S'), [l for l in labs if 'Step' in l or 'Shar' in l or 'Upload' in l][:3])
-open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'runs', 'post_times.txt'),'a').write('%s trial %s\n' % (key, time.strftime('%Y-%m-%d %H:%M:%S')))
+open(os.path.join(phone._state_dir(), 'post_times.txt'),'a').write('%s trial %s\n' % (key, time.strftime('%Y-%m-%d %H:%M:%S')))

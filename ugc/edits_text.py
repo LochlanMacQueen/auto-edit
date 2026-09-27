@@ -1,57 +1,70 @@
 #!/usr/bin/env python3
 """Create and place a header text element in Instagram Edits.
 
-A new text element spans from the playhead to the end of the video, so the
-caller positions the playhead first (see edits_headers.scroll_to_caption).
+Positioning is deterministic: a new element appears at the canvas centre, so we drag
+by the known offset and only use pixel measurement (strict colours, narrow window) to
+verify. Scanning the whole preview for "white" broke on bright footage (a lamp or a grey
+hoodie reads as text) and dragged elements off the canvas.
 """
 import subprocess
-import os
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
 import phone  # noqa: E402
 
-PREVIEW_Y0, PREVIEW_H = 112, 332        # video frame inside the Edits canvas
+PREVIEW_Y0, PREVIEW_H = 107, 332        # video frame inside the Edits text editor (points), measured from the accessibility tree
+RECT_DRAG_GAIN = 0.825                  # element moves 0.825 pt per pt of drag
 NAME_FRAC = 0.3025                      # reference: white career/subject line
-IQ_FRAC = 0.385                         # lowered from the reference 0.3512 so two-line names never collide
+IQ_FRAC = 0.385                         # gold second line
 DRAG_GAIN = 0.65                        # canvas drags undershoot
+CENTER_FRAC = 0.5                       # where Edits puts a new text element
+SCALE = 3                               # screenshot px per point
 
 
 def frac_to_preview(frac):
     return PREVIEW_Y0 + frac * PREVIEW_H
 
 
-def _bands(png, y0=300, h=1100, gold=False, thresh=40):
-    """Rows of white (or gold) text inside the canvas, in screenshot pixels."""
-    out = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", png,
-                          "-vf", f"crop=1170:{h}:0:{y0},format=rgb24",
+def _rows(png, y0_pt, y1_pt, gold):
+    """Rows (in points) inside [y0_pt, y1_pt] that contain a run of text-coloured pixels."""
+    y0 = int(y0_pt * SCALE); h = int((y1_pt - y0_pt) * SCALE)
+    out = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", png, "-vf", f"crop=1170:{h}:0:{y0},format=rgb24",
                           "-f", "rawvideo", "-"], capture_output=True).stdout
     W = 1170
-    def hit(r, c):
-        i = (r * W + c) * 3
-        R, G, B = out[i], out[i+1], out[i+2]
-        return (R > 190 and G > 150 and B < 110) if gold else (R > 235 and G > 235 and B > 235)
-    rows = [sum(1 for c in range(W) if hit(r, c)) for r in range(h)]
-    runs, cur = [], None
-    for r, v in enumerate(rows):
-        if v > thresh and cur is None:
-            cur = r
-        elif v <= thresh and cur is not None:
-            if r - cur > 8:
-                runs.append((cur + y0, r + y0))
-            cur = None
-    return runs
+    hits = []
+    for r in range(h):
+        base = r * W * 3; n = 0
+        for c in range(200, 970, 2):            # centre 2/3 of the canvas, every other pixel
+            i = base + c * 3
+            R, G, B = out[i], out[i + 1], out[i + 2]
+            if gold:
+                ok = R > 235 and G > 185 and B < 90 and G < R
+            else:
+                ok = R > 242 and G > 242 and B > 242 and abs(R - B) < 10
+            if ok:
+                n += 1
+        if n > 25:
+            hits.append(y0_pt + r / SCALE)
+    return hits
+
+
+def measure_near(y_pt, gold=False, window=45):
+    """Centre (points) of the text band near y_pt, or None."""
+    phone.shot("/tmp/_m.png")
+    rows = _rows("/tmp/_m.png", max(PREVIEW_Y0, y_pt - window), min(PREVIEW_Y0 + PREVIEW_H, y_pt + window), gold)
+    if len(rows) < 3:
+        return None
+    return (rows[0] + rows[-1]) / 2
 
 
 def measure(gold=False):
-    """(centre_pt, cap_px) of the topmost text band on the canvas."""
+    """Topmost text band anywhere in the preview (strict colours)."""
     phone.shot("/tmp/_m.png")
-    runs = [r for r in _bands("/tmp/_m.png", gold=gold) if r[0] < 900]
-    if not runs:
+    rows = _rows("/tmp/_m.png", PREVIEW_Y0, PREVIEW_Y0 + PREVIEW_H, gold)
+    if len(rows) < 3:
         return None, None
-    a, b = runs[0]
-    return (a + b) / 2 / 3, b - a
+    return (rows[0] + rows[-1]) / 2, (rows[-1] - rows[0]) * SCALE
 
 
 def set_size(target=34, tries=4):
@@ -70,17 +83,23 @@ def set_size(target=34, tries=4):
     return int(e["value"]) if e else None
 
 
-def set_position(frac, gold=False, tries=6, tol=2):
+def set_position(frac, gold=False, start_frac=CENTER_FRAC, tries=3, tol=3):
+    """Move the SELECTED element from start_frac (default: canvas centre, where new
+    elements appear) to frac. Every drag starts ON the element's believed position."""
     target = frac_to_preview(frac)
+    cur = frac_to_preview(start_frac)
+    seen = measure_near(cur, gold)
+    if seen is not None:
+        cur = seen
     for _ in range(tries):
-        cur, _cap = measure(gold=gold)
-        if cur is None:
-            return None
         if abs(cur - target) <= tol:
             return cur
         phone.drag(195, cur, 195, cur + (target - cur) / DRAG_GAIN, ms=900, hold=500)
         time.sleep(1.8)
-    cur, _ = measure(gold=gold)
+        seen = measure_near(target, gold)
+        if seen is None:
+            seen = measure_near(cur + (target - cur), gold, window=70)
+        cur = seen if seen is not None else target
     return cur
 
 
@@ -91,30 +110,54 @@ def deselect():
         time.sleep(1.8)
 
 
-def add_header(text, frac=NAME_FRAC, size=34, gold=False):
-    """Create a text element at the playhead, style-inherited, then place it."""
-    deselect()
-    t = phone.find("Text", exact=True)
-    if not t:
-        raise RuntimeError("Text tool not found — is a pill still selected?")
-    phone.tap(t["x"], t["y"])
-    time.sleep(5)
-    kb = phone.wait_keyboard(timeout=20)
-    # Do NOT clear a fresh element: hammering delete on an empty field dismisses
-    # the editor and discards the element.
-    typed, missing = phone.type_taps(text, kb=kb)
-    time.sleep(1.2)
-    got = phone.text_value()
-    if got != text:                       # one repair pass, now that it exists
-        phone.clear_text(kb=kb, n=len(str(got or "")) + 6)
-        time.sleep(0.8)
-        phone.type_taps(text, kb=kb)
-        time.sleep(1.2)
-        got = phone.text_value()
-    set_size(size)
-    set_position(frac, gold=gold)
-    d = phone.find("Done")
-    if d:
-        phone.tap(d["x"], d["y"])
-        time.sleep(3)
-    return got
+# ---------------------------------------------------------------- rect-based placement
+def element_rect(text):
+    """Screen rect of the canvas text element (editor open). Edits exposes it as a
+    TextView labelled 'Text on your story' with the text as value (or, in a broken
+    project, label == text with zero width)."""
+    for n in phone.elements():
+        r = n.get("rect") or {}
+        if (n.get("type") == "TextView" and (n.get("value") == text or n.get("label") == text)
+                and r.get("width", 0) > 10 and r.get("height", 0) > 10       # Edits also exposes zero-size ghost nodes
+                and 0 <= r.get("y", -1) < 470):
+            return {k: float(r[k]) for k in ("x", "y", "width", "height")}
+    return None
+
+
+def element_center_y(text):
+    r = element_rect(text)
+    return None if r is None else r["y"] + r["height"] / 2
+
+
+def on_canvas(text):
+    c = element_center_y(text)
+    return c is not None and PREVIEW_Y0 + 8 <= c <= PREVIEW_Y0 + PREVIEW_H - 8
+
+
+def place(text, frac, tries=9, tol=3.0):
+    """Move the selected element so its centre sits at frac of the frame. A drag can
+    drop the element's selection, after which further drags do nothing — so every step
+    is small, verified against the rect, and a stall re-taps the element first."""
+    target = frac_to_preview(frac)
+    stall = 0
+    for _ in range(tries):
+        cur = element_center_y(text)
+        if cur is None:
+            return None
+        dy = target - cur
+        if abs(dy) <= tol:
+            return cur
+        step = max(-50.0, min(50.0, dy / RECT_DRAG_GAIN))
+        phone.drag(195, cur, 195, cur + step, ms=900, hold=500)
+        time.sleep(1.5)
+        new = element_center_y(text)
+        if new is None:
+            return None
+        if abs(new - cur) < 2:
+            stall += 1
+            phone.tap(195, new); time.sleep(1.2)      # re-select, then try again
+            if stall >= 3:
+                return new
+        else:
+            stall = 0
+    return element_center_y(text)

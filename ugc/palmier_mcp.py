@@ -3,7 +3,20 @@
 import json, os, sys, urllib.request, urllib.error, itertools
 
 URL = "http://127.0.0.1:19789/mcp"
-SESSION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".palmier_session")
+
+def _state_dir():
+    """Where runtime state goes. Inside the installed app the bundle is read-only (and
+    writing to it breaks its signature), so use ~/AutoEdit there."""
+    d = os.environ.get("AUTOEDIT_HOME")
+    if not d and "/Contents/Resources/" in os.path.abspath(__file__):
+        d = os.path.join(os.path.expanduser("~"), "AutoEdit")
+    if not d:
+        d = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+SESSION_FILE = os.path.join(_state_dir(), ".palmier_session")
 _id = itertools.count(100)
 
 def _post(payload, session=None):

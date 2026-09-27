@@ -21,6 +21,10 @@ import edits_timeline as T  # noqa: E402
 import edits_text as ET  # noqa: E402
 
 EDGE_MAX = 330
+
+
+class HeaderLost(RuntimeError):
+    """A header didn't land where it should — the project must be abandoned, not patched."""
 GOLD = "Suggested color #FFD400"
 
 
@@ -69,7 +73,8 @@ def scroll(dx):
 
 
 def select(p):
-    x = min(max(p["x"] + min(p["w"] / 2, 25), 12), 370)
+    # never below x=45: the track's Hide/Mute eye button lives at x≈10–30
+    x = min(max(p["x"] + min(p["w"] / 2, 25), 48), 370)
     phone.tap(x, p["y"] + p["h"] / 2)
     time.sleep(1.8)
 
@@ -155,7 +160,7 @@ def restyle(p, gold=False, frac=None):
     phone.tap(e["x"], e["y"]); time.sleep(3)
     style_classic_outline()
     if frac is not None:
-        ET.set_position(frac, gold=gold)
+        ET.place(p["label"], frac)
     done()
     return True
 
@@ -167,14 +172,24 @@ def create_at_start(text, size, frac, gold=False):
     if gold:
         make_gold()
     style_classic_outline()
-    ET.set_size(size); ET.set_position(frac, gold=gold)
+    ET.set_size(size)
+    placed = ET.place(text, frac)
+    log("  placed", repr(text), "centre", placed and round(placed, 1), "target", round(ET.frac_to_preview(frac), 1))
+    target = ET.frac_to_preview(frac)
+    if placed is None or not ET.on_canvas(text) or abs(placed - target) > 12:
+        raise HeaderLost(f"header {text!r} landed at {placed} (target {target:.0f})")
     done()
-    rows = header_rows()
-    y = rows[-1] if gold else rows[-1]           # newest track is the highest = last
-    y = min(header_rows())
-    p = [r for r in pills_on(y) if r["label"] == text]
-    log("created", repr(text), "row", y, "ok" if p else "!! not found")
-    return y
+    for _ in range(6):                       # the timeline may still be scrolled/settling
+        T.deselect(); T.to_start()
+        rows = header_rows()
+        if rows:
+            y = min(rows)
+            p = [r for r in pills_on(y) if r["label"] == text]
+            if p:
+                log("created", repr(text), "row", y, "ok")
+                return y
+        time.sleep(1.5)
+    raise RuntimeError(f"created {text!r} but its pill never appeared on the timeline")
 
 
 def extend_to_end(y, label):
@@ -213,11 +228,15 @@ def set_width(y, label, target_w, tol=12):
     """Drag the right handle of the pill on row y until its width is target_w.
     Overshooting the video end EXTENDS THE PROJECT (black tail), so never drag
     blindly to the end."""
-    stalls = 0
+    stalls = 0; missing = 0
     for _ in range(90):
         p = [r for r in pills_on(y) if r["label"] == label]
         if not p:
+            missing += 1
+            if missing >= 8:
+                raise HeaderLost(f"lost the {label!r} pill while extending it")
             scroll(+200); continue
+        missing = 0
         p = p[0]; right = p["x"] + p["w"]; need = target_w - p["w"]
         if abs(need) <= tol:
             log("  width", repr(label), "=", round(p["w"]), "target", round(target_w))
@@ -278,6 +297,21 @@ def delete(p):
     T.deselect()
 
 
+def ensure_tracks_visible():
+    """A track's eye button (x≈20, only reachable with the timeline at its start) reads
+    'Hide' when visible and 'Unhide' when hidden. Hidden tracks render nothing — not in
+    the preview, not in the export. Tap every 'Unhide' back on."""
+    T.deselect(); T.to_start()
+    for _ in range(3):
+        hidden = [n for n in phone.elements() if n.get("label") == "Unhide" and (n.get("rect") or {}).get("x", 99) < 40]
+        if not hidden:
+            return True
+        for n in hidden:
+            r = n["rect"]; phone.tap(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2); time.sleep(1.2)
+        log("  un-hid", len(hidden), "track(s)")
+    return not any(n.get("label") == "Unhide" for n in phone.elements())
+
+
 def clear_headers():
     """Delete every non-caption pill visible at the start (repeat until none)."""
     T.deselect(); T.to_start()
@@ -311,10 +345,12 @@ def split_or_reuse(y, text):
 
 def sections(spec):
     T.to_start()
-    for name, iq in spec["sections"]:
-        c = T.scroll_to_caption(name.lower())
+    for sec in spec["sections"]:
+        name, iq = sec[0], sec[1]
+        cue = sec[2] if len(sec) > 2 and sec[2] else name.lower()   # words that start the section's caption
+        c = T.scroll_to_caption(cue)
         if not c:
-            log("!! caption not found:", name); continue
+            raise HeaderLost(f"caption for section {name!r} not found (cue {cue!r})")
         ok1 = split_or_reuse(header_rows()[0], name)
         ok2 = split_or_reuse(header_rows()[1], iq)
         log("section", name, "name", ok1, "gold", ok2)
@@ -325,23 +361,28 @@ def sections(spec):
         if c:
             break
     if not c:
-        log("!! CTA caption not found"); return
+        raise HeaderLost("call-to-action caption not found")
     ok = split_or_reuse(header_rows()[0], spec["cta"][0])
     gy = header_rows()[1]
     r = piece_at_playhead(gy) or split_at_playhead(gy)
     if r:
         delete(r)
     log("cta", ok, "gold tail deleted", bool(r))
+    if not ensure_tracks_visible():
+        raise RuntimeError("a track is still hidden — refusing to export invisible headers")
 
 
 def build(spec, duration_s, tracks=True):
     """spec = {"hook": [line1, line2], "sections": [[name, iq], ...], "cta": [text, None]}"""
+    ensure_tracks_visible()
     if tracks:
         target = duration_s * PT_PER_SEC - 8
         name_y = create_at_start(spec["hook"][0], 40, ET.NAME_FRAC)
-        set_width(name_y, spec["hook"][0], target)
+        if not set_width(name_y, spec["hook"][0], target):
+            raise HeaderLost(f"could not extend {spec['hook'][0]!r} to the video length")
         gold_y = create_at_start(spec["hook"][1], 30, ET.IQ_FRAC, gold=True)
-        set_width(gold_y, spec["hook"][1], target)
+        if not set_width(gold_y, spec["hook"][1], target):
+            raise HeaderLost(f"could not extend {spec['hook'][1]!r} to the video length")
     sections(spec)
 
 
