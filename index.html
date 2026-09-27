@@ -3,191 +3,463 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>auto-edit — reels edited and posted by your AI</title>
-<meta name="description" content="Drop your raw takes in a folder, tell Claude what you want, review the cut. auto-edit adds native Instagram Edits captions and headers on your iPhone and posts it. Free for macOS.">
-<meta property="og:title" content="auto-edit — reels edited and posted by your AI">
-<meta property="og:description" content="Raw takes in, finished captioned reels posted from your iPhone out. Free for macOS.">
-<meta property="og:image" content="icon-256.png">
-<link rel="icon" type="image/png" href="favicon.png">
+<title>auto-edit — an ai video editor that lives on your mac</title>
+<meta name="description" content="Drop your raw takes in a folder and tell Claude what you want. auto-edit cuts every pause, adds native Instagram Edits captions and headers on your iPhone, and posts it. 100% free for macOS.">
+<meta property="og:title" content="auto-edit — an ai video editor that lives on your mac">
+<meta property="og:description" content="raw takes in. posted reels out. 100% free for macOS.">
+<meta property="og:image" content="assets/studio.jpg">
+<link rel="icon" type="image/png" href="assets/appicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0c10; --bg2:#101118; --card:#13141c; --line:#23242f;
-  --text:#ecebf3; --muted:#a3a2b3; --faint:#6f6e80;
-  --accent:#aaa0ff; --accent2:#8575f6; --ok:#3ecf8e;
-  --radius:16px;
+  --outer:#1c1c1e; --canvas:#f5f5f2; --dot:#d6d6d1; --line:#e4e4df;
+  --ink:#0f0f10; --ink2:#2a2a2c; --muted:#8e8e89; --faint:#b3b3ad;
+  --blue:#2f7bf6; --gold:#ffd400;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
-header.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
-.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:700;letter-spacing:-.01em;white-space:nowrap}
-.brand img{width:28px;height:28px;border-radius:7px}
-.nav a.link{color:var(--muted);margin-left:22px;font-size:15px}
-.nav a.link:hover{color:var(--text);text-decoration:none}
+body{margin:0;background:var(--outer);color:var(--ink);font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
 
-/* hero */
-.hero{text-align:center;padding:64px 0 40px;background:radial-gradient(ellipse 70% 55% at 50% 0%,#1c1830 0%,transparent 70%)}
-.hero .appicon{width:112px;height:112px;border-radius:25px;box-shadow:0 18px 60px #6d5cf055}
-.hero h1{font-size:clamp(34px,6vw,58px);line-height:1.05;letter-spacing:-.03em;margin:26px 0 16px}
-.hero p.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:640px;margin:0 auto 32px}
-.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:10px;border-radius:12px;padding:14px 22px;font-weight:650;font-size:16px;border:1px solid transparent;cursor:pointer}
-.btn:hover{text-decoration:none;filter:brightness(1.06)}
-.btn.primary{background:linear-gradient(135deg,#b7adff,#8d7bf2);color:#111}
-.btn.ghost{background:transparent;border-color:var(--line);color:var(--text)}
-.btn svg{width:18px;height:18px}
-.meta{margin-top:14px;color:var(--faint);font-size:13.5px}
+/* the "laptop screen" */
+.screen{margin:18px 18px 0;border-radius:28px 28px 0 0;background:var(--canvas);
+  background-image:radial-gradient(var(--dot) 1px,transparent 1.2px);background-size:22px 22px;overflow:hidden;min-height:100vh}
 
-/* sections */
-section{padding:56px 0}
-h2{font-size:clamp(24px,3.4vw,32px);letter-spacing:-.02em;margin:0 0 8px}
-.sub{color:var(--muted);margin:0 0 28px;max-width:640px}
-.grid{display:grid;gap:14px}
-.g4{grid-template-columns:repeat(4,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g2{grid-template-columns:repeat(2,1fr)}
-@media (max-width:860px){.g4,.g3{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:560px){.g4,.g3,.g2{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
-.card b{display:block;font-size:16.5px;margin-bottom:6px}
-.card p{margin:0;color:var(--muted);font-size:15px}
-.num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1c1b28;border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:14px;margin-bottom:12px}
+/* menu bar */
+.menubar{position:sticky;top:0;z-index:50;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:50px;padding:0 22px;
+  background:rgba(245,245,242,.82);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.mb-left{display:flex;align-items:center;gap:18px;font-size:14px}
+.mb-left .brand{font-weight:600;color:var(--ink)}
+.mb-left a:not(.brand){color:var(--muted)}
+.mb-left a:not(.brand):hover{color:var(--ink)}
+.mb-logo img{width:30px;height:30px;border-radius:8px;box-shadow:0 2px 8px rgba(80,60,200,.25);transition:transform .25s}
+.mb-logo:hover img{transform:rotate(-8deg) scale(1.08)}
+.mb-right{display:flex;align-items:center;justify-content:flex-end;gap:16px;color:#8a8a86;font-size:14px}
+.mb-right svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mb-get{display:inline-flex;align-items:center;gap:6px;color:var(--blue);font-weight:500}
+.mb-get svg{fill:var(--blue);stroke:none;width:14px;height:14px}
+#clock{font-variant-numeric:tabular-nums}
 
-/* install */
-.steps{counter-reset:s;display:grid;gap:12px}
-.step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
-.step::before{counter-increment:s;content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#111;font-weight:800}
-.step b.t{display:block;margin-bottom:4px}
-.step p{margin:0;color:var(--muted)}
-.step .path{display:inline-block;margin-top:8px;font-size:14px;background:#0b0c10;border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--text)}
-.note{margin-top:14px;font-size:14px;color:var(--faint)}
+/* stage + scaled desk */
+.stage{position:relative;height:820px}
+.desk{position:absolute;left:50%;top:0;width:1400px;height:820px;transform:translateX(-50%) scale(var(--k,1));transform-origin:top center}
+.hero{position:absolute;left:50%;top:238px;width:820px;transform:translateX(-50%);text-align:center;z-index:5;pointer-events:none}
+.hero > *{pointer-events:auto}
+.hero h1{margin:0;font-size:156px;line-height:.95;font-weight:800;letter-spacing:-.055em;color:var(--ink)}
+.hero .tagline{margin:18px 0 0;font-size:22px;color:var(--ink2);letter-spacing:-.01em}
+.cta{margin-top:30px;display:flex;justify-content:center}
+.dl{display:inline-flex;align-items:center;gap:11px;padding:13px 30px 13px 26px;border-radius:999px;color:#fff;font-size:19px;font-weight:500;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#7ab8ff 0%,#3f8cff 48%,#2a6fe6 100%);border:1px solid #2566da;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 6px rgba(0,40,140,.25),0 1px 2px rgba(0,0,0,.12),0 8px 22px rgba(47,123,246,.35);
+  transition:transform .15s,box-shadow .15s}
+.dl:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 6px rgba(0,40,140,.25),0 2px 4px rgba(0,0,0,.12),0 12px 28px rgba(47,123,246,.45)}
+.dl:active{transform:translateY(1px)}
+.dl svg{width:20px;height:20px;fill:#fff}
+.fine{margin:14px 0 0;font-size:13.5px;color:var(--muted)}
 
-/* requirements + faq */
-ul.req{list-style:none;padding:0;margin:0;display:grid;gap:10px}
-ul.req li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px}
-ul.req li span.dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-top:9px}
-ul.req li em{font-style:normal;color:var(--muted)}
-details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
-details summary{cursor:pointer;font-weight:600;list-style:none}
-details summary::-webkit-details-marker{display:none}
-details summary::after{content:"+";float:right;color:var(--faint)}
-details[open] summary::after{content:"–"}
-details p{color:var(--muted);margin:10px 0 0}
-code{background:#0b0c10;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+/* desk items */
+.it{position:absolute;left:calc(50% + var(--x));top:var(--y);width:var(--w);rotate:var(--r,0deg);user-select:none;-webkit-user-select:none;touch-action:none}
+.drag{cursor:grab;transition:filter .2s, scale .2s}
+.drag:hover{filter:drop-shadow(0 10px 18px rgba(0,0,0,.12))}
+.drag.dragging{cursor:grabbing;scale:1.04;filter:drop-shadow(0 18px 30px rgba(0,0,0,.2));transition:none}
+.it img{pointer-events:none;-webkit-user-drag:none}
 
-.final{text-align:center;padding:64px 0 72px}
-@media (max-width:560px){.br{display:none}.nav a.hide-sm{display:none}.nav a.link{margin-left:16px}}
-footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--faint);font-size:13.5px}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.win{background:#fff;border:1px solid #d9d9d4;border-radius:9px;box-shadow:0 12px 34px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);padding:0 0 0}
+.win-bar{height:22px;display:flex;align-items:center;gap:6px;padding:0 9px;border-bottom:1px solid #ececea;background:linear-gradient(#fbfbfa,#f1f1ef);border-radius:9px 9px 0 0}
+.tl{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tl.r{background:#ff5f57}.tl.y{background:#febc2e}.tl.g{background:#28c840}
+.win-x{margin-left:auto;border:0;background:none;color:#a8a8a3;font-size:14px;line-height:1;cursor:pointer;padding:2px 0 2px 6px}
+.win-x:hover{color:#555}
+.win-body{position:relative;margin:7px;border-radius:5px;overflow:hidden;background:#111}
+.win-body img{width:100%;height:100%;object-fit:cover;animation:kb var(--kb,16s) ease-in-out infinite alternate}
+.v916 .win-body{aspect-ratio:9/16}
+.v169 .win-body{aspect-ratio:16/9}
+@keyframes kb{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.14) translate(-2%,-1.5%)}}
+.scrub{position:absolute;left:8px;right:8px;bottom:7px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);overflow:hidden}
+.scrub span{display:block;height:100%;width:0;background:#fff;border-radius:2px;animation:prog var(--len,9s) linear infinite}
+@keyframes prog{from{width:0}to{width:100%}}
+.tc{position:absolute;left:8px;bottom:14px;font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff;background:rgba(0,0,0,.45);padding:3px 5px;border-radius:4px;font-variant-numeric:tabular-nums}
+.rec{position:absolute;right:8px;top:8px;display:flex;align-items:center;gap:4px;font:700 9px/1 Inter;color:#fff;background:rgba(0,0,0,.4);padding:3px 6px;border-radius:99px}
+.rec i{width:6px;height:6px;border-radius:50%;background:#ff3b30;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.15}}
+.cap{position:absolute;left:0;right:0;top:calc(100% + 8px);text-align:center;font-size:12.5px;color:#9b9b96;white-space:nowrap}
+.win.closing{animation:poof .28s ease-in forwards}
+@keyframes poof{to{scale:.6;opacity:0;filter:blur(3px)}}
+
+.tile{border-radius:4px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.tile img{width:100%}
+.sticker img{width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.14))}
+.sticker .cap{top:calc(100% + 2px)}
+
+.nametag{background:#fff;border-radius:7px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.14);text-align:center}
+.nametag .hd{color:#fff;padding:6px 0 4px;font:800 11px/1 Inter;letter-spacing:.06em}
+.nametag .hd small{display:block;font:600 7px/1.3 Inter;letter-spacing:.02em;opacity:.95}
+.nametag .nm{font:700 22px/1 Caveat,cursive;color:#141414;padding:10px 6px 12px}
+.nametag .ft{height:8px}
+.nametag.blue .hd,.nametag.blue .ft{background:#2c5fe0}
+.nametag.red .hd,.nametag.red .ft{background:#e2262f}
+
+.kao{font:500 20px/1 Inter;color:#222;white-space:nowrap}
+.folder svg{width:100%;height:auto;filter:drop-shadow(0 4px 8px rgba(0,80,200,.18))}
+.folder .cap{top:calc(100% + 1px);color:#6e6e69}
+.beach{width:24px;height:24px;border-radius:50%;background:conic-gradient(#ff3b30,#ff9500,#ffcc00,#34c759,#007aff,#af52de,#ff3b30);animation:spin 1.1s linear infinite;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.18)}
+@keyframes spin{to{rotate:360deg}}
+.clap.go img{animation:clap .5s ease-out}
+@keyframes clap{25%{transform:rotate(-14deg) scale(1.06)}55%{transform:rotate(8deg)}100%{transform:none}}
+.wiggle:hover img{animation:wig .6s ease-in-out}
+@keyframes wig{25%{transform:rotate(-8deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
+.float{animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+
+.tidy{position:absolute;right:26px;bottom:18px;z-index:6;border:1px solid var(--line);background:rgba(255,255,255,.7);color:#6d6d68;font:500 12.5px Inter;padding:6px 11px;border-radius:99px;cursor:pointer;backdrop-filter:blur(6px)}
+.tidy:hover{color:var(--ink)}
+.hint{position:absolute;left:26px;bottom:20px;z-index:6;font:600 16px/1 Caveat,cursive;color:#9a9a94}
+
+/* big player */
+.player-sec{padding:10px 20px 70px}
+.player{position:relative;max-width:1060px;margin:0 auto;aspect-ratio:16/9;border-radius:22px;overflow:hidden;background:#000;box-shadow:0 30px 80px rgba(0,0,0,.22),0 2px 6px rgba(0,0,0,.1)}
+.player .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 9s ease-out,filter .6s}
+.player.playing .poster{transform:scale(1.07)}
+.play-pill{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:10px;padding:12px 22px 12px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.45);
+  color:#fff;font:500 18px Inter;background:rgba(255,255,255,.22);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);cursor:pointer;transition:opacity .3s,transform .2s;z-index:6}
+.play-pill:hover{transform:translate(-50%,-50%) scale(1.04)}
+.play-pill svg{width:18px;height:18px;fill:#fff}
+.player.playing .play-pill{opacity:0;pointer-events:none}
+.mute{position:absolute;right:18px;top:16px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.25);z-index:6}
+.mute svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
+.d-chip{position:absolute;left:18px;top:16px;z-index:5;font:600 12px Inter;color:#fff;background:rgba(0,0,0,.4);padding:6px 10px;border-radius:99px;backdrop-filter:blur(6px);opacity:0;transition:opacity .4s}
+.player.playing .d-chip{opacity:1}
+.d-head{position:absolute;left:0;right:0;top:12%;text-align:center;z-index:4;opacity:0;transform:translateY(-8px);transition:opacity .5s,transform .5s}
+.d-head.on{opacity:1;transform:none}
+.d-head .h1{font:800 clamp(22px,4vw,46px)/1.05 Inter;color:#fff;-webkit-text-stroke:2px #000;paint-order:stroke fill;letter-spacing:-.01em}
+.d-head .h2{margin-top:6px;font:800 clamp(14px,2.3vw,26px)/1 Inter;color:var(--gold);-webkit-text-stroke:1.6px #000;paint-order:stroke fill}
+.d-cap{position:absolute;left:0;right:0;bottom:25%;text-align:center;z-index:4}
+.d-cap span{display:inline-block;font:800 clamp(18px,3.1vw,36px)/1 Inter;color:#fff;-webkit-text-stroke:2px #000;paint-order:stroke fill;transform:scale(.6);opacity:0;transition:transform .18s cubic-bezier(.3,1.6,.5,1),opacity .12s}
+.d-cap span.on{transform:none;opacity:1}
+.d-toast{position:absolute;right:18px;top:56px;z-index:5;display:flex;align-items:center;gap:10px;background:#fff;color:#111;border-radius:14px;padding:10px 14px;font:600 13.5px Inter;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateX(130%);transition:transform .5s cubic-bezier(.2,1.2,.4,1)}
+.d-toast.on{transform:none}
+.d-toast .ok{width:22px;height:22px;border-radius:50%;background:#28c840;display:grid;place-items:center}
+.d-toast .ok svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:3}
+.d-toast small{display:block;font-weight:500;color:#777;font-size:12px}
+.tl-bar{position:absolute;left:14px;right:14px;bottom:14px;z-index:5;background:rgba(18,18,22,.72);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
+.player.playing .tl-bar{opacity:1;transform:none}
+.tl-top{display:flex;justify-content:space-between;font:600 11.5px Inter;color:#c9c9d1;margin-bottom:8px}
+.tl-top b{color:#fff}
+#saved{color:#a99cff;font-variant-numeric:tabular-nums}
+.track{display:flex;height:30px;gap:0}
+.clip{flex:var(--f) 0 0;min-width:0;border-radius:6px;background:linear-gradient(180deg,#9d8cff,#7a64f0);color:#fff;font:600 11px/30px Inter;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.clip.cta-c{background:linear-gradient(180deg,#6cc3ff,#3d8fe8)}
+.gap{flex:var(--g) 0 0;border-radius:6px;margin:0 2px;background:repeating-linear-gradient(135deg,rgba(255,255,255,.14) 0 5px,rgba(255,255,255,.04) 5px 10px);transition:flex-grow .45s ease,margin .45s ease}
+.gap.cut{flex-grow:0;margin:0}
+.player-note{text-align:center;color:var(--muted);font-size:14.5px;margin:18px 0 0}
+
+/* lower sections */
+.sec{max-width:1060px;margin:0 auto;padding:60px 20px}
+.sec h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.035em;font-weight:800;margin:0 0 6px;text-align:center}
+.sec .lede{text-align:center;color:var(--muted);margin:0 auto 34px;max-width:560px}
+.notes{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.note{position:relative;padding:22px 18px 20px;border-radius:4px;box-shadow:0 10px 24px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);rotate:var(--r)}
+.note::before{content:"";position:absolute;left:50%;top:-9px;width:62px;height:18px;translate:-50% 0;rotate:-3deg;background:rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.note .n{font:700 30px/1 Caveat,cursive;color:rgba(0,0,0,.55)}
+.note b{display:block;font-size:16px;margin:8px 0 6px;letter-spacing:-.01em}
+.note p{margin:0;font-size:14px;color:#3a3a38}
+.y{background:#fff3a8}.p{background:#ffd6e7}.b{background:#cfe6ff}.g{background:#d7f5d0}
+
+.macwin{max-width:720px;margin:0 auto;background:#fff;border:1px solid #d9d9d4;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.12)}
+.macwin .win-bar{height:38px;border-radius:14px 14px 0 0;padding:0 14px}
+.macwin .win-bar .tl{width:12px;height:12px}
+.macwin .ttl{position:absolute;left:0;right:0;text-align:center;font:600 13px Inter;color:#6f6f6a;pointer-events:none}
+.macwin .body{padding:26px 28px 28px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:14px 0;border-top:1px solid #efefec}
+.step:first-child{border-top:0}
+.step .k{width:30px;height:30px;border-radius:50%;background:#f1efff;color:#6b56f0;display:grid;place-items:center;font-weight:800}
+.step b.t{display:block;margin-bottom:2px}
+.step p{margin:0;color:#56564f;font-size:14.5px}
+.path{display:inline-block;margin-top:8px;font:500 13px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f1;border:1px solid #e6e6e1;border-radius:7px;padding:5px 9px;color:#222}
+.needs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
+.needs span{background:#fff;border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:14px;color:#3a3a38;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.final{text-align:center;padding:30px 20px 90px}
+.final h2{font-size:clamp(34px,5.4vw,60px);letter-spacing:-.045em;font-weight:800;margin:0 0 22px}
+footer{border-top:1px solid var(--line);padding:22px 26px 34px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+footer a:hover{color:var(--ink)}
+.mobile-strip{display:none}
+
+@media (max-width:980px){.notes{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){
+  .screen{margin:0;border-radius:0}
+  .mb-left a:not(.brand),.mb-right .st,#clock{display:none}
+  .menubar{padding:0 14px}
+  .stage{height:auto;padding:70px 16px 36px}
+  .desk{position:static;width:auto;height:auto;transform:none}
+  .desk .it,.tidy,.hint{display:none}
+  .hero{position:static;transform:none;width:auto}
+  .hero h1{font-size:clamp(58px,17vw,88px)}
+  .hero .tagline{font-size:18px}
+  .mobile-strip{display:flex;justify-content:center;gap:12px;margin-top:40px}
+  .mobile-strip .win{position:relative;width:31%;max-width:130px}
+  .mobile-strip .cap{position:static;margin-top:6px;font-size:11px}
+  .notes{grid-template-columns:1fr}
+  .player{border-radius:16px}
+  .tl-bar .clip{font-size:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="screen">
 
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="#"><img src="icon-256.png" alt="">auto-edit</a>
-    <nav>
-      <a class="link hide-sm" href="#how">How it works</a>
-      <a class="link" href="#install">Install</a>
-      <a class="link" href="https://github.com/LochlanMacQueen/auto-edit-app">GitHub</a>
+  <header class="menubar">
+    <nav class="mb-left">
+      <a class="brand" href="#top">auto-edit</a>
+      <a href="#how">how it works</a>
+      <a href="#install">install</a>
     </nav>
+    <a class="mb-logo" href="#top" aria-label="auto-edit"><img src="assets/appicon-128.png" alt=""></a>
+    <div class="mb-right">
+      <svg class="st" viewBox="0 0 24 24"><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".8" fill="currentColor"/></svg>
+      <svg class="st" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>
+      <svg class="st" viewBox="0 0 24 24"><path d="m7 7 10 10-5 4V3l5 4L7 17"/></svg>
+      <svg class="st" viewBox="0 0 28 24"><rect x="2" y="7" width="20" height="10" rx="3"/><rect x="4.5" y="9.5" width="9" height="5" rx="1.2" fill="currentColor" stroke="none"/><path d="M24.5 10.5v3"/></svg>
+      <span id="clock">11:53 AM</span>
+      <a class="mb-get" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg"><svg viewBox="0 0 24 24"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.8-1.1-2.8-4.2zM13.9 5.3c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg>get auto-edit</a>
+    </div>
   </header>
+
+  <section class="stage" id="top">
+    <div class="desk" id="desk">
+
+      <!-- left -->
+      <figure class="it tile drag" style="--x:-640px;--y:92px;--w:132px;--r:-3deg"><img src="assets/vhs.jpg" alt=""></figure>
+      <figure class="it win v916 drag" data-name="raw-take-12.mov" style="--x:-548px;--y:58px;--w:140px;--kb:14s;--len:11s">
+        <div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><button class="win-x" aria-label="close">✕</button></div>
+        <div class="win-body"><img src="assets/rawtake.jpg" alt=""><span class="rec"><i></i>REC</span><span class="tc">00:00</span><div class="scrub"><span></span></div></div>
+        <figcaption class="cap">raw-take-12.mov</figcaption>
+      </figure>
+      <figure class="it nametag blue drag" style="--x:-352px;--y:44px;--w:94px;--r:-7deg"><div class="hd">HELLO<small>my name is</small></div><div class="nm">auto-edit</div><div class="ft"></div></figure>
+      <div class="it kao drag" style="--x:-322px;--y:176px;--w:auto">^ ω ^</div>
+      <figure class="it folder drag" style="--x:-338px;--y:404px;--w:62px"><svg viewBox="0 0 64 50"><defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3ff"/><stop offset="1" stop-color="#5eb1f7"/></linearGradient></defs><path d="M3 8a4 4 0 0 1 4-4h14l5 5h31a4 4 0 0 1 4 4v3H3z" fill="#7cc1fb"/><rect x="3" y="12" width="58" height="35" rx="4" fill="url(#fg)"/></svg><figcaption class="cap">raw takes</figcaption></figure>
+      <figure class="it sticker drag" style="--x:-628px;--y:388px;--w:74px;--r:-4deg"><img src="assets/trash.png" alt="a wastebasket full of cut film"><figcaption class="cap">dead air</figcaption></figure>
+      <figure class="it win v169 drag" data-name="late-night-edit.mov" style="--x:-612px;--y:520px;--w:230px;--kb:18s;--len:14s">
+        <div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><button class="win-x" aria-label="close">✕</button></div>
+        <div class="win-body"><img src="assets/desk.jpg" alt=""><span class="tc">00:00</span><div class="scrub"><span></span></div></div>
+        <figcaption class="cap">late-night-edit.mov</figcaption>
+      </figure>
+      <div class="it kao drag" style="--x:-338px;--y:600px;--w:auto">(¬‿¬)</div>
+      <figure class="it sticker drag" style="--x:-412px;--y:672px;--w:128px;--r:-11deg"><img src="assets/camcorder.png" alt="a silver camcorder"></figure>
+
+      <!-- top center -->
+      <figure class="it sticker drag float" style="--x:-278px;--y:98px;--w:96px;--r:6deg"><img src="assets/reel.png" alt="a film reel"></figure>
+      <figure class="it win v169 drag" data-name="snap-together.mov" style="--x:-162px;--y:26px;--w:196px;--kb:15s;--len:8s">
+        <div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><button class="win-x" aria-label="close">✕</button></div>
+        <div class="win-body"><img src="assets/snap.jpg" alt=""><span class="tc">00:00</span><div class="scrub"><span></span></div></div>
+        <figcaption class="cap">cut-every-pause.mov</figcaption>
+      </figure>
+      <div class="it kao drag" style="--x:120px;--y:72px;--w:auto">¯\_(ツ)_/¯</div>
+      <figure class="it tile drag" style="--x:158px;--y:118px;--w:62px"><img src="assets/pixelcam.jpg" alt=""></figure>
+      <div class="it drag" style="--x:212px;--y:262px;--w:24px" title="rendering…"><div class="beach"></div></div>
+
+      <!-- right -->
+      <figure class="it win v169 drag" data-name="take-3.mov" style="--x:338px;--y:62px;--w:262px;--kb:13s;--len:10s">
+        <div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><button class="win-x" aria-label="close">✕</button></div>
+        <div class="win-body"><img src="assets/take3.jpg" alt=""><span class="rec"><i></i>REC</span><span class="tc">00:00</span><div class="scrub"><span></span></div></div>
+        <figcaption class="cap">hook-take-3.mov</figcaption>
+      </figure>
+      <figure class="it nametag red drag" style="--x:548px;--y:176px;--w:94px;--r:8deg"><div class="hd">HELLO<small>my name is</small></div><div class="nm">auto-edit</div><div class="ft"></div></figure>
+      <figure class="it sticker drag" style="--x:592px;--y:30px;--w:62px;--r:4deg"><img src="assets/tripod.png" alt="a phone on a tripod with a ring light"></figure>
+      <div class="it kao drag" style="--x:430px;--y:318px;--w:auto">{ ^‿^ }</div>
+      <figure class="it sticker clap drag" id="clap" style="--x:318px;--y:470px;--w:92px;--r:9deg"><img src="assets/clapper.png" alt="a clapperboard"></figure>
+      <figure class="it folder drag" style="--x:420px;--y:600px;--w:58px"><svg viewBox="0 0 64 50"><path d="M3 8a4 4 0 0 1 4-4h14l5 5h31a4 4 0 0 1 4 4v3H3z" fill="#7cc1fb"/><rect x="3" y="12" width="58" height="35" rx="4" fill="url(#fg)"/></svg><figcaption class="cap">posted</figcaption></figure>
+      <figure class="it win v916 drag" data-name="posted.mov" style="--x:506px;--y:398px;--w:140px;--kb:16s;--len:9s">
+        <div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><button class="win-x" aria-label="close">✕</button></div>
+        <div class="win-body"><img src="assets/posted.jpg" alt=""><span class="tc">00:00</span><div class="scrub"><span></span></div></div>
+        <figcaption class="cap">posted-at-3am.mov</figcaption>
+      </figure>
+      <figure class="it sticker wiggle drag" style="--x:468px;--y:676px;--w:84px;--r:-6deg"><img src="assets/mascot.png" alt="a happy purple play button"></figure>
+
+      <div class="hero">
+        <h1>auto-edit</h1>
+        <p class="tagline">an ai video editor that lives on your mac</p>
+        <div class="cta">
+          <a class="dl" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
+            <svg viewBox="0 0 24 24"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.8-1.1-2.8-4.2zM13.9 5.3c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg>
+            download for mac
+          </a>
+        </div>
+        <p class="fine">100% free. macOS 26 or higher · apple silicon</p>
+        <div class="mobile-strip">
+          <figure class="win v916"><div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i></div><div class="win-body"><img src="assets/rawtake.jpg" alt=""></div><figcaption class="cap">raw-take.mov</figcaption></figure>
+          <figure class="win v916"><div class="win-bar"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i></div><div class="win-body"><img src="assets/posted.jpg" alt=""></div><figcaption class="cap">posted.mov</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <span class="hint">psst — drag stuff around ↓</span>
+    <button class="tidy" id="tidy" type="button">⌘ clean up desk</button>
+  </section>
+
+  <section class="player-sec">
+    <div class="player" id="player">
+      <img class="poster" src="assets/studio.jpg" alt="a creator filming a reel at his desk">
+      <span class="d-chip">raw take · 0:41 · 4K60</span>
+      <span class="mute"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg></span>
+      <div class="d-head" id="dhead"><div class="h1">What your IQ is</div><div class="h2">(Career edition)</div></div>
+      <div class="d-cap"><span id="dcap"></span></div>
+      <div class="d-toast" id="dtoast"><span class="ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><div>posted to instagram<small>trial reel · just now</small></div></div>
+      <div class="tl-bar">
+        <div class="tl-top"><span><b>auto-edit</b> · cutting dead air</span><span id="saved">0.0s removed</span></div>
+        <div class="track" id="track">
+          <div class="clip" style="--f:9">hook</div><div class="gap" data-s="2.4" style="--g:3"></div>
+          <div class="clip" style="--f:14">engineer</div><div class="gap" data-s="3.1" style="--g:4"></div>
+          <div class="clip" style="--f:13">scientist</div><div class="gap" data-s="4.6" style="--g:5"></div>
+          <div class="clip" style="--f:13">accountant</div><div class="gap" data-s="2.2" style="--g:3"></div>
+          <div class="clip cta-c" style="--f:12">call to action</div><div class="gap" data-s="1.9" style="--g:2"></div>
+        </div>
+      </div>
+      <button class="play-pill" id="play" type="button"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span id="playlbl">play video</span></button>
+    </div>
+    <p class="player-note">raw takes in → pauses cut → native captions &amp; headers → posted. that's the whole thing.</p>
+  </section>
+
+  <section class="sec" id="how">
+    <h2>how it works</h2>
+    <p class="lede">you make the creative calls. your ai drives the editor and your phone.</p>
+    <div class="notes">
+      <div class="note y" style="--r:-1.5deg"><div class="n">1</div><b>drop your takes in a folder</b><p>raw clips, the pictures you want on screen, a song. that's the whole setup.</p></div>
+      <div class="note p" style="--r:1.2deg"><div class="n">2</div><b>tell claude what you want</b><p>hook → sections → call to action, what's on screen when, how long. it remembers your format.</p></div>
+      <div class="note b" style="--r:-.8deg"><div class="n">3</div><b>review the cut</b><p>every pause gone, every word kept. approve it or say exactly what to change.</p></div>
+      <div class="note g" style="--r:1.6deg"><div class="n">4</div><b>it posts from your phone</b><p>native instagram edits captions + headers, shared from instagram. normal or trial reel, on your schedule.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="install">
+    <h2>install in two minutes</h2>
+    <p class="lede">free, no account, no subscription. your videos never leave your mac and phone.</p>
+    <div class="macwin">
+      <div class="win-bar" style="position:relative"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i><span class="ttl">Install auto-edit</span></div>
+      <div class="body">
+        <div class="step"><span class="k">1</span><div><b class="t">download &amp; drag to Applications</b><p>open <b>auto-edit.dmg</b> and drag the icon onto your Applications folder.</p></div></div>
+        <div class="step"><span class="k">2</span><div><b class="t">allow it once</b><p>this beta isn't notarized by Apple yet, so macOS asks the first time. open auto-edit, click <b>Done</b>, then:</p><span class="path">System Settings → Privacy &amp; Security → Open Anyway</span></div></div>
+        <div class="step"><span class="k">3</span><div><b class="t">connect claude &amp; follow "get started"</b><p>click <b>Connect → Add to Claude Desktop</b>, then say <i>"run setup_status and walk me through anything that isn't ready."</i> it sets up your iPhone with you.</p></div></div>
+      </div>
+    </div>
+    <div class="needs">
+      <span>🖥️ apple silicon mac · macOS 26</span>
+      <span>📱 iPhone with Instagram Edits + Instagram</span>
+      <span>🛠️ Xcode, once (free)</span>
+      <span>🤖 Claude Desktop or Claude Code</span>
+    </div>
+  </section>
+
+  <section class="final">
+    <h2>go make something.</h2>
+    <div class="cta">
+      <a class="dl" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
+        <svg viewBox="0 0 24 24"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.8-1.1-2.8-4.2zM13.9 5.3c.7-.8 1.2-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg>
+        download for mac
+      </a>
+    </div>
+    <p class="fine">100% free · open source (GPL-3.0)</p>
+  </section>
+
+  <footer>
+    <span>auto-edit · <a href="https://github.com/LochlanMacQueen/auto-edit-app">app source</a> · <a href="https://github.com/LochlanMacQueen/auto-edit">server source</a></span>
+    <span>built on the open-source release of Palmier Pro. not affiliated with Palmier, Inc. or Instagram.</span>
+  </footer>
 </div>
 
-<div class="hero">
-  <div class="wrap">
-    <img class="appicon" src="icon-256.png" alt="auto-edit app icon" width="112" height="112">
-    <h1>Reels, edited and posted<br class="br"> by your AI.</h1>
-    <p class="lead">Drop your raw talking-head takes in a folder and tell Claude what you want. auto-edit cuts every pause, places your images and music, then adds native Instagram Edits captions and headers on your iPhone and posts it.</p>
-    <div class="cta">
-      <a class="btn primary" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-        Download for macOS
-      </a>
-      <a class="btn ghost" href="#install">How to install</a>
-    </div>
-    <div class="meta">Free · Version 0.2.0 · 340 MB · Apple Silicon Mac on macOS 26</div>
-  </div>
-</div>
+<script>
+(() => {
+  // live menu-bar clock
+  const clock = document.getElementById('clock');
+  const tick = () => { clock.textContent = new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}); };
+  tick(); setInterval(tick, 15000);
 
-<main class="wrap">
+  // scale the desk to the viewport
+  const desk = document.getElementById('desk'), stage = desk.parentElement;
+  let k = 1;
+  const fit = () => {
+    if (innerWidth <= 760) { k = 1; desk.style.removeProperty('--k'); stage.style.removeProperty('height'); return; }
+    k = Math.min(1, Math.max(.6, (stage.clientWidth - 20) / 1400));
+    desk.style.setProperty('--k', k); stage.style.height = (820 * k) + 'px';
+  };
+  fit(); addEventListener('resize', fit);
 
-  <section id="how">
-    <h2>How it works</h2>
-    <p class="sub">You make the creative calls. Claude drives the editor and your phone.</p>
-    <div class="grid g4">
-      <div class="card"><div class="num">1</div><b>Put your files in a folder</b><p>Your raw takes, the images you want on screen, a song, and a reference reel if you're copying a format.</p></div>
-      <div class="card"><div class="num">2</div><b>Tell Claude what you want</b><p>Structure, what's on screen when, the music, the length. The first video is a conversation; after that it remembers your format.</p></div>
-      <div class="card"><div class="num">3</div><b>Review the cut</b><p>The clean video lands in auto-edit's Review tab. Approve it, or say exactly what to change.</p></div>
-      <div class="card"><div class="num">4</div><b>Captions, headers, post</b><p>It runs the video through Instagram Edits on your phone and shares it from Instagram, as a normal or trial reel, on your schedule.</p></div>
-    </div>
-  </section>
+  // running timecodes on the little windows
+  const wins = [...document.querySelectorAll('.desk .win')];
+  const t0 = performance.now();
+  setInterval(() => {
+    wins.forEach((w, i) => {
+      const tc = w.querySelector('.tc'); if (!tc) return;
+      const len = parseFloat(getComputedStyle(w).getPropertyValue('--len')) || 10;
+      const s = ((performance.now() - t0) / 1000 + i * 1.7) % len;
+      tc.textContent = '00:' + String(Math.floor(s)).padStart(2, '0');
+    });
+  }, 250);
 
-  <section>
-    <h2>Why it's different</h2>
-    <p class="sub">Built around what actually gets reach.</p>
-    <div class="grid g3">
-      <div class="card"><b>Native Edits text</b><p>Captions and headers are real Instagram Edits text in the app's own fonts, not burned-in overlays.</p></div>
-      <div class="card"><b>Posted from Instagram</b><p>Every reel is shared from the Instagram app on your phone, never uploaded through an API.</p></div>
-      <div class="card"><b>Every pause cut</b><p>Dead air and false starts are detected word by word and removed, and every word you meant to say is kept.</p></div>
-      <div class="card"><b>Nothing posts unapproved</b><p>Finished videos wait in Review until you approve them.</p></div>
-      <div class="card"><b>4K60 in, 4K60 out</b><p>High-resolution footage stays high-resolution through the edit, the Edits export and the post.</p></div>
-      <div class="card"><b>Works with your AI</b><p>Claude Desktop (one click), Claude Code, and ChatGPT through a secure tunnel.</p></div>
-    </div>
-  </section>
+  // drag anything on the desk
+  document.querySelectorAll('.desk .drag').forEach(el => {
+    el.dataset.tx = 0; el.dataset.ty = 0;
+    el.addEventListener('pointerdown', e => {
+      if (e.target.closest('.win-x')) return;
+      e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add('dragging');
+      el.style.zIndex = (window.__z = (window.__z || 20) + 1);
+      const sx = e.clientX, sy = e.clientY, bx = +el.dataset.tx, by = +el.dataset.ty; let moved = false;
+      const move = ev => {
+        const dx = (ev.clientX - sx) / k, dy = (ev.clientY - sy) / k;
+        if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+        el.dataset.tx = bx + dx; el.dataset.ty = by + dy; el.style.translate = `${bx + dx}px ${by + dy}px`;
+      };
+      const up = () => {
+        el.classList.remove('dragging'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up);
+        if (!moved && el.id === 'clap') { el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
+      };
+      el.addEventListener('pointermove', move); el.addEventListener('pointerup', up);
+    });
+  });
 
-  <section id="install">
-    <h2>Install</h2>
-    <p class="sub">About two minutes for the app. The iPhone connection is a one-time setup that Claude walks you through.</p>
-    <div class="steps">
-      <div class="step"><div><b class="t">Download and drag to Applications</b><p>Open <b>auto-edit.dmg</b> and drag the auto-edit icon onto the Applications folder.</p></div></div>
-      <div class="step"><div><b class="t">Allow it to open (first launch only)</b><p>This beta isn't notarized by Apple yet, so macOS asks before opening it. Open auto-edit, click <b>Done</b> on the warning, then go to</p><span class="path">System Settings → Privacy &amp; Security → scroll down → Open Anyway</span><p style="margin-top:8px">and confirm. You only do this once.</p></div></div>
-      <div class="step"><div><b class="t">Connect Claude and follow Get started</b><p>The auto-edit window opens on <b>Get started</b>. Click <b>Connect → Add to Claude Desktop</b>, then tell Claude: <i>"Run setup_status and walk me through anything that isn't ready."</i> It finishes the setup with you, including the iPhone.</p></div></div>
-    </div>
-    <p class="note">Prefer the terminal? The server also installs on its own: <code>curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash</code></p>
-  </section>
+  // close buttons + clean up desk
+  document.querySelectorAll('.desk .win-x').forEach(b => b.addEventListener('click', () => {
+    const w = b.closest('.win'); w.classList.add('closing'); setTimeout(() => { w.style.visibility = 'hidden'; }, 280);
+  }));
+  document.getElementById('tidy').addEventListener('click', () => {
+    document.querySelectorAll('.desk .drag').forEach(el => {
+      el.style.transition = 'translate .5s cubic-bezier(.2,1.1,.3,1)';
+      el.dataset.tx = 0; el.dataset.ty = 0; el.style.translate = '0px 0px';
+      el.classList.remove('closing'); el.style.visibility = '';
+      setTimeout(() => { el.style.transition = ''; }, 520);
+    });
+  });
 
-  <section>
-    <h2>Before you start</h2>
-    <p class="sub">What you'll need.</p>
-    <ul class="req">
-      <li><span class="dot"></span><div>An <b>Apple Silicon Mac on macOS 26</b> <em>(the editor needs it)</em></div></li>
-      <li><span class="dot"></span><div>An <b>iPhone</b> with <b>Instagram Edits</b> and <b>Instagram</b> installed and logged into the account you post from <em>(Developer Mode on, plugged in by USB)</em></div></li>
-      <li><span class="dot"></span><div><b>Xcode</b>, once, to connect the phone <em>(free from the App Store; Claude handles the rest)</em></div></li>
-      <li><span class="dot"></span><div><b>Claude Desktop</b> or <b>Claude Code</b> <em>(or ChatGPT through a tunnel)</em></div></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>Questions</h2>
-    <details><summary>Why does macOS warn me when I open it?</summary><p>This beta is signed on this machine but not yet notarized through Apple's Developer ID program, so Gatekeeper asks you to confirm the first time. Use Privacy &amp; Security → Open Anyway. The source is public if you'd rather build it yourself.</p></details>
-    <details><summary>Will it post without me?</summary><p>Only after you approve. Finished cuts wait in the Review tab, and a reel is shared only after you approve it there, at the time you chose.</p></details>
-    <details><summary>Why does it need my iPhone?</summary><p>Captions and headers are added in the real Instagram Edits app and the reel is shared from Instagram. auto-edit drives those apps on your phone over USB. Keep the phone unlocked and on a Focus mode while it works, so notifications don't interrupt it.</p></details>
-    <details><summary>Where do my videos go?</summary><p>Everything stays on your Mac and your phone. Projects and outputs live in your own folders, and settings live in <code>~/AutoEdit</code>. The only network access is downloading the speech model once and posting to your Instagram.</p></details>
-    <details><summary>Is it free? Is it open source?</summary><p>Yes to both. auto-edit is GPL-3.0. The editor is a fork of Palmier Pro's open-source release.</p></details>
-  </section>
-
-  <div class="final">
-    <h2>Make your next reel with your AI.</h2>
-    <p class="sub" style="margin:8px auto 26px">Free for macOS.</p>
-    <div class="cta">
-      <a class="btn primary" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-        Download for macOS
-      </a>
-    </div>
-  </div>
-</main>
-
-<footer>
-  <div class="wrap">
-    <span>auto-edit · GPL-3.0 · <a href="https://github.com/LochlanMacQueen/auto-edit-app">app source</a> · <a href="https://github.com/LochlanMacQueen/auto-edit">server source</a></span>
-    <span>Built on the open-source release of Palmier Pro. Not affiliated with Palmier, Inc. or Instagram.</span>
-  </div>
-</footer>
-
+  // the big player: a live demo of what auto-edit does
+  const player = document.getElementById('player'), play = document.getElementById('play'), lbl = document.getElementById('playlbl');
+  const head = document.getElementById('dhead'), cap = document.getElementById('dcap'), toast = document.getElementById('dtoast');
+  const gaps = [...document.querySelectorAll('#track .gap')], saved = document.getElementById('saved');
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let running = false;
+  const reset = () => {
+    head.classList.remove('on'); cap.classList.remove('on'); cap.textContent = ''; toast.classList.remove('on');
+    gaps.forEach(g => g.classList.remove('cut')); saved.textContent = '0.0s removed';
+  };
+  const say = async (words, each = 360) => {
+    for (const w of words) { cap.classList.remove('on'); await sleep(60); cap.textContent = w; cap.classList.add('on'); await sleep(each); }
+  };
+  play.addEventListener('click', async () => {
+    if (running) return; running = true; reset(); player.classList.add('playing');
+    await sleep(900);
+    let total = 0;
+    for (const g of gaps) { g.classList.add('cut'); total += +g.dataset.s; saved.textContent = total.toFixed(1) + 's removed'; await sleep(430); }
+    await sleep(350); head.classList.add('on');
+    await sleep(700);
+    await say(['cut', 'every', 'pause.']); await sleep(250);
+    await say(['keep', 'every', 'word.']); await sleep(250);
+    await say(['post', 'it', 'for', 'me.'], 330);
+    await sleep(300); toast.classList.add('on');
+    await sleep(3200);
+    player.classList.remove('playing'); reset(); lbl.textContent = 'play again'; running = false;
+  });
+})();
+</script>
 </body>
 </html>
