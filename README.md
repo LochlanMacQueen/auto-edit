@@ -6,6 +6,10 @@ Raw talking-head takes in, finished captioned reels posted from your iPhone out 
 
 ## Install
 
+**Easiest — the app (one install):** download **[auto-edit.dmg](https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg)**, drag to Applications, right-click → Open the first time (ad-hoc signed). It is the video editor (a GPL fork of Palmier Pro) with this server bundled inside; the auto-edit window opens on launch. Source: [auto-edit-app](https://github.com/LochlanMacQueen/auto-edit-app).
+
+**Server only (use with your own Palmier Pro):**
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash
 ```

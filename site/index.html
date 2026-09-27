@@ -3,10 +3,10 @@
 <body><main>
 <h1>Reels, edited and posted<br>by your AI.</h1>
 <p class="lead">Drop your raw talking-head takes in a folder. Tell Claude or ChatGPT what you want. Review the cut. It adds native captions and headers in Instagram Edits on your iPhone and posts it — the same way, every time.</p>
-<a class="btn" href="https://github.com/LochlanMacQueen/auto-edit#install">Install on macOS</a> <a class="btn ghost" href="https://github.com/LochlanMacQueen/auto-edit">Source on GitHub</a>
+<a class="btn" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">Download for macOS</a> <a class="btn ghost" href="https://github.com/LochlanMacQueen/auto-edit">Source on GitHub</a>
 <h2>Install</h2>
-<pre>curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash</pre>
-<small>Apple Silicon Mac, macOS 26. Installs ffmpeg + whisper, starts the local server, opens the dashboard at 127.0.0.1:4747. Then install <a href="https://github.com/palmier-io/palmier-pro/releases/latest/download/PalmierPro.dmg" style="color:var(--accent)">Palmier Pro</a> (the editor) and connect Claude from the dashboard.</small>
+<p>One app. Download <b>auto-edit.dmg</b>, drag it to Applications, right-click → Open the first time. The editor, the server and the dashboard are all inside; on launch it opens the auto-edit window → <b>Connect</b> → add to Claude.</p>
+<small>Apple Silicon Mac, macOS 26. Prefer the server alone with your own Palmier Pro? <code>curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash</code></small>
 <h2>How it works</h2>
 <ol><li><b>Put your files in a folder</b> — takes, images, a song, a reference reel.</li><li><b>Tell your agent exactly what you want</b> — structure, what's on screen when, length, music.</li><li><b>Review</b> — the clean cut lands in the dashboard; approve or send notes.</li><li><b>Edits + post</b> — native captions and headers in Instagram Edits on your phone, shared from Instagram (normal or trial reel), spaced out however you like.</li></ol>
 <div class="grid"><div class="card"><b>One MCP server</b>29 tools: transcribe, dead-space cuts with false-start detection, Palmier Pro timeline builds, export, music bake, verification, review, phone jobs, posting queue.</div><div class="card"><b>Works with</b>Claude Desktop (one-click extension), Claude Code, ChatGPT (via tunnel), Cursor, Codex.</div><div class="card"><b>Native reach</b>Captions and headers are real Instagram Edits text, and the post is shared from the Instagram app — not an API upload.</div></div>
