@@ -143,15 +143,17 @@ def speech_spans(path: str, noise_db: float = -28, lead: float = 0.07, tail: flo
 
 
 @mcp.tool()
-def overlay_band(image: str, out: str, x: int = 50, y: int = 232, w: int = 980, h: int = 497, y_offset: float = 0.5) -> str:
+def overlay_band(image: str, out: str, x: int = 50, y: int = 232, w: int = 980, h: int = 497, y_offset: float = 0.5,
+                 canvas_w: int = 1080, canvas_h: int = 1920) -> str:
     """Make a full-frame 1080x1920 transparent PNG with `image` centre-cropped into the band (x,y,w,h). Default band = the 2:1 top band used by the subject-edition reels; career edition used 16:9 at x=110,y=126,w=860,h=484. y_offset picks which part of a tall image survives the crop (0 top … 1 bottom)."""
-    return media.overlay_band(Path(image).expanduser(), Path(out).expanduser(), (x, y, w, h), y_offset=y_offset)
+    return media.overlay_band(Path(image).expanduser(), Path(out).expanduser(), (x, y, w, h), canvas=(canvas_w, canvas_h), y_offset=y_offset)
 
 
 @mcp.tool()
-def overlay_fit(image: str, out: str, max_w: int = 900, max_h: int | None = None, bottom: int | None = 610, top: int | None = None) -> str:
+def overlay_fit(image: str, out: str, max_w: int = 900, max_h: int | None = None, bottom: int | None = 610, top: int | None = None,
+                canvas_w: int = 1080, canvas_h: int = 1920) -> str:
     """Full-frame PNG with `image` scaled to fit (aspect kept), centred, bottom edge at `bottom` px (or top edge at `top`). Used for app-store / score cards on the call-to-action."""
-    return media.overlay_fit(Path(image).expanduser(), Path(out).expanduser(), max_w, max_h, bottom, top)
+    return media.overlay_fit(Path(image).expanduser(), Path(out).expanduser(), max_w, max_h, bottom, top, canvas=(canvas_w, canvas_h))
 
 
 # ================================================================ palmier
@@ -183,17 +185,17 @@ Spans are source seconds (from speech_spans, kept ones only); clips are butted w
 
 
 @mcp.tool()
-def export_timeline(out_path: str, timeline_id: str | None = None) -> dict:
-    """Export the (active or given) Palmier timeline as H.264 'Match Timeline' to out_path and wait for it. Then run `bake` — Palmier's first exported frame is corrupt and music is added there."""
+def export_timeline(out_path: str, timeline_id: str | None = None, codec: str = "H.264", resolution: str = "Match Timeline") -> dict:
+    """Export the (active or given) Palmier timeline to out_path and wait for it. Defaults H.264 'Match Timeline'. For 4K60 sources use codec='H.265', resolution='4K' (Palmier's H.264 path silently drops a 4K60 timeline to 30 fps). Then run `bake` — Palmier's first exported frame is corrupt and music is added there."""
     Path(out_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
-    return TL.export(timeline_id, str(Path(out_path).expanduser()))
+    return TL.export(timeline_id, str(Path(out_path).expanduser()), codec=codec, resolution=resolution)
 
 
 @mcp.tool()
-def bake(src: str, out: str, music: str | None = None, music_db: float = -16.0, fade_out: float = 2.0, fps: int = 60) -> dict:
-    """Finish an export: trim the corrupt first frame, force fps, bake the song under the voice (looped if shorter, faded out). This is the ONLY place sound is added — never in Edits. Returns the probe of the finished file."""
+def bake(src: str, out: str, music: str | None = None, music_db: float = -16.0, fade_out: float = 2.0, fps: int = 60, encoder: str = "auto") -> dict:
+    """Finish an export: trim the corrupt first frame, force fps, bake the song under the voice (looped if shorter, faded out). This is the ONLY place sound is added — never in Edits. encoder: 'auto' (libx264 crf 19 for ≤1080p, VideoToolbox H.264 30 Mbps for 4K), 'x264' or 'videotoolbox'. Returns the probe of the finished file."""
     Path(out).expanduser().parent.mkdir(parents=True, exist_ok=True)
-    return media.bake(Path(src).expanduser(), Path(out).expanduser(), music and Path(music).expanduser(), music_db, fade_out, fps)
+    return media.bake(Path(src).expanduser(), Path(out).expanduser(), music and Path(music).expanduser(), music_db, fade_out, fps, encoder=encoder)
 
 
 @mcp.tool()

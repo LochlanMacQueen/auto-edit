@@ -44,7 +44,14 @@ def open_project(name: str, create: bool = True) -> dict:
     return target
 
 
-def ensure_media(paths: list[str], folder: str | None = None) -> dict:
+def _assets():
+    return P.call("get_media", {}).get("assets", [])
+
+
+def ensure_media(paths: list[str], folder: str | None = None, hydrate_timeout=45) -> dict:
+    """Import what's missing, then wait until every needed asset has a known duration —
+    Palmier hydrates media lazily and add_clips rejects a source range on an asset
+    whose length it doesn't know yet."""
     media = _media_map()
     missing = [p for p in paths if Path(p).stem not in media and Path(p).name not in media]
     for p in missing:
@@ -54,8 +61,27 @@ def ensure_media(paths: list[str], folder: str | None = None) -> dict:
         P.call("import_media", args)
     if missing:
         time.sleep(1.0)
-        media = _media_map()
-    return media
+    stems = {Path(p).stem for p in paths} | {Path(p).name for p in paths}
+    t0 = time.time(); poked = set()
+    while True:
+        assets = _assets()
+        media = {}
+        for a in assets:
+            media[a["name"]] = a["id"]; media[Path(a["name"]).stem] = a["id"]
+        pending = [a for a in assets if (a["name"] in stems or Path(a["name"]).stem in stems)
+                   and a.get("type") == "video" and not a.get("durationSeconds")]
+        if not pending:
+            return media
+        if time.time() - t0 > hydrate_timeout:
+            raise RuntimeError("media never hydrated (no duration): " + ", ".join(a["name"] for a in pending))
+        for a in pending:                       # inspect_media forces analysis of a cold asset
+            if a["id"] not in poked:
+                poked.add(a["id"])
+                try:
+                    P.call("inspect_media", {"mediaRef": a["id"]})
+                except Exception:
+                    pass
+        time.sleep(2.0)
 
 
 def build(plan: dict) -> dict:
@@ -98,9 +124,13 @@ def build(plan: dict) -> dict:
         sections[name][1] = f
         order.append(name)
     end = f
-    P.call("add_clips", {"entries": entries})
+    r = P.call("add_clips", {"entries": entries})
+    if not isinstance(r, dict) or r.get("error") or (isinstance(r, str) and "error" in r.lower()):
+        raise RuntimeError(f"add_clips (video) failed: {str(r)[:400]}")
     tlc = P.call("get_timeline", {})
-    vtracks = [t for t in tlc.get("tracks", []) if t.get("kind", "video") != "audio"]
+    # the track that holds the talking-head clips (not the overlay images, not audio)
+    vtracks = [t for t in tlc.get("tracks", []) if (t.get("type") or t.get("kind", "video")) == "video"
+               and any(c.get("mediaType", "video") == "video" for c in t.get("clips", []))]
     fixed = 0
     if vtracks:
         clips = vtracks[0].get("clips", [])
@@ -141,14 +171,16 @@ def build(plan: dict) -> dict:
             else:
                 warnings.append(f"overlay {Path(o['image']).name} skipped: no room in {sec}")
     if ov:
-        P.call("add_clips", {"entries": ov})
+        r = P.call("add_clips", {"entries": ov})
+        if not isinstance(r, dict) or r.get("error") or (isinstance(r, str) and "error" in r.lower()):
+            raise RuntimeError(f"add_clips (overlays) failed: {str(r)[:400]}")
     return {"timelineId": tid, "frames": end, "seconds": round(end / fps, 3), "fps": fps,
             "sections": {k: {"frames": v, "seconds": [round(v[0] / fps, 3), round(v[1] / fps, 3)]} for k, v in sections.items()},
             "order": order, "gap_fixes": fixed, "overlays": len(ov), "warnings": warnings}
 
 
-def export(timeline_id: str | None, out_path: str, codec="H.264", timeout_s=900) -> dict:
-    args = {"mode": "video", "codec": codec, "resolution": "Match Timeline", "outputPath": str(out_path)}
+def export(timeline_id: str | None, out_path: str, codec="H.264", resolution="Match Timeline", timeout_s=1800) -> dict:
+    args = {"mode": "video", "codec": codec, "resolution": resolution, "outputPath": str(out_path)}
     if timeline_id:
         args["timelineId"] = timeline_id
     r = P.call("export_project", args)

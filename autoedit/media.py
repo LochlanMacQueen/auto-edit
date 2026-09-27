@@ -137,10 +137,12 @@ def overlay_fit(image, out, max_w, max_h=None, bottom=None, top=None, canvas=(10
 
 
 # ---------------------------------------------------------------- finishing
-def bake(src, out, music=None, music_db=-16.0, fade_out=2.0, fps=60, trim_first_frame=True, crf=19) -> dict:
+def bake(src, out, music=None, music_db=-16.0, fade_out=2.0, fps=60, trim_first_frame=True, crf=19, encoder="auto") -> dict:
     """Trim Palmier's corrupt first frame, force fps, bake the song under the voice
     (song looped if shorter, faded out over the last `fade_out` s)."""
-    dur = probe(src)["duration"]
+    info = probe(src); dur = info["duration"]
+    if encoder == "auto":
+        encoder = "videotoolbox" if (info.get("width") or 0) * (info.get("height") or 0) > 1920 * 1080 * 1.5 else "x264"
     cmd = FF[:]
     if trim_first_frame:
         cmd += ["-ss", f"{1/fps:.4f}"]
@@ -150,8 +152,11 @@ def bake(src, out, music=None, music_db=-16.0, fade_out=2.0, fps=60, trim_first_
         cmd += ["-stream_loop", "-1", "-i", str(music), "-filter_complex",
                 f"[1:a]volume={music_db}dB,afade=t=out:st={fo:.3f}:d={fade_out}[bg];[0:a][bg]amix=inputs=2:duration=first:normalize=0[a]",
                 "-map", "0:v", "-map", "[a]"]
-    cmd += ["-r", str(fps), "-c:v", "libx264", "-preset", "medium", "-crf", str(crf), "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)]
+    if encoder == "videotoolbox":
+        venc = ["-c:v", "h264_videotoolbox", "-b:v", "30M", "-maxrate", "40M", "-bufsize", "60M", "-profile:v", "high"]
+    else:
+        venc = ["-c:v", "libx264", "-preset", "medium", "-crf", str(crf)]
+    cmd += ["-r", str(fps)] + venc + ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)]
     r = run(cmd)
     if r.returncode:
         raise RuntimeError(r.stderr.strip()[-600:])
