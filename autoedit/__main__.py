@@ -12,6 +12,7 @@ def serve():
     import uvicorn
     from .server import app
     uvicorn.run(app(), host="127.0.0.1", port=PORT, log_level="warning")
+    os._exit(0)          # don't linger on background threads after the app asks us to stop
 
 
 def status():
