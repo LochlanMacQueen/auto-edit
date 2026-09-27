@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>auto-edit — reels edited and posted by your AI</title>
+<meta name="description" content="Drop your raw takes in a folder, tell Claude what you want, review the cut. auto-edit adds native Instagram Edits captions and headers on your iPhone and posts it. Free for macOS.">
+<meta property="og:title" content="auto-edit — reels edited and posted by your AI">
+<meta property="og:description" content="Raw takes in, finished captioned reels posted from your iPhone out. Free for macOS.">
+<meta property="og:image" content="icon-256.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bg:#0b0c10; --bg2:#101118; --card:#13141c; --line:#23242f;
+  --text:#ecebf3; --muted:#a3a2b3; --faint:#6f6e80;
+  --accent:#aaa0ff; --accent2:#8575f6; --ok:#3ecf8e;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.brand img{width:28px;height:28px;border-radius:7px}
+.nav a.link{color:var(--muted);margin-left:22px;font-size:15px}
+.nav a.link:hover{color:var(--text);text-decoration:none}
+
+/* hero */
+.hero{text-align:center;padding:64px 0 40px;background:radial-gradient(ellipse 70% 55% at 50% 0%,#1c1830 0%,transparent 70%)}
+.hero .appicon{width:112px;height:112px;border-radius:25px;box-shadow:0 18px 60px #6d5cf055}
+.hero h1{font-size:clamp(34px,6vw,58px);line-height:1.05;letter-spacing:-.03em;margin:26px 0 16px}
+.hero p.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:640px;margin:0 auto 32px}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;border-radius:12px;padding:14px 22px;font-weight:650;font-size:16px;border:1px solid transparent;cursor:pointer}
+.btn:hover{text-decoration:none;filter:brightness(1.06)}
+.btn.primary{background:linear-gradient(135deg,#b7adff,#8d7bf2);color:#111}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--text)}
+.btn svg{width:18px;height:18px}
+.meta{margin-top:14px;color:var(--faint);font-size:13.5px}
+
+/* sections */
+section{padding:56px 0}
+h2{font-size:clamp(24px,3.4vw,32px);letter-spacing:-.02em;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 28px;max-width:640px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:860px){.g4,.g3{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.g4,.g3,.g2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card b{display:block;font-size:16.5px;margin-bottom:6px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1c1b28;border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:14px;margin-bottom:12px}
+
+/* install */
+.steps{counter-reset:s;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.step::before{counter-increment:s;content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#111;font-weight:800}
+.step b.t{display:block;margin-bottom:4px}
+.step p{margin:0;color:var(--muted)}
+.step .path{display:inline-block;margin-top:8px;font-size:14px;background:#0b0c10;border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--text)}
+.note{margin-top:14px;font-size:14px;color:var(--faint)}
+
+/* requirements + faq */
+ul.req{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+ul.req li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px}
+ul.req li span.dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-top:9px}
+ul.req li em{font-style:normal;color:var(--muted)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+details summary{cursor:pointer;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";float:right;color:var(--faint)}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);margin:10px 0 0}
+code{background:#0b0c10;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+
+.final{text-align:center;padding:64px 0 72px}
+@media (max-width:560px){.br{display:none}.nav a.hide-sm{display:none}.nav a.link{margin-left:16px}}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--faint);font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="#"><img src="icon-256.png" alt="">auto-edit</a>
+    <nav>
+      <a class="link hide-sm" href="#how">How it works</a>
+      <a class="link" href="#install">Install</a>
+      <a class="link" href="https://github.com/LochlanMacQueen/auto-edit-app">GitHub</a>
+    </nav>
+  </header>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <img class="appicon" src="icon-256.png" alt="auto-edit app icon" width="112" height="112">
+    <h1>Reels, edited and posted<br class="br"> by your AI.</h1>
+    <p class="lead">Drop your raw talking-head takes in a folder and tell Claude what you want. auto-edit cuts every pause, places your images and music, then adds native Instagram Edits captions and headers on your iPhone and posts it.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Download for macOS
+      </a>
+      <a class="btn ghost" href="#install">How to install</a>
+    </div>
+    <div class="meta">Free · Version 0.2.0 · 340 MB · Apple Silicon Mac on macOS 26</div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section id="how">
+    <h2>How it works</h2>
+    <p class="sub">You make the creative calls. Claude drives the editor and your phone.</p>
+    <div class="grid g4">
+      <div class="card"><div class="num">1</div><b>Put your files in a folder</b><p>Your raw takes, the images you want on screen, a song, and a reference reel if you're copying a format.</p></div>
+      <div class="card"><div class="num">2</div><b>Tell Claude what you want</b><p>Structure, what's on screen when, the music, the length. The first video is a conversation; after that it remembers your format.</p></div>
+      <div class="card"><div class="num">3</div><b>Review the cut</b><p>The clean video lands in auto-edit's Review tab. Approve it, or say exactly what to change.</p></div>
+      <div class="card"><div class="num">4</div><b>Captions, headers, post</b><p>It runs the video through Instagram Edits on your phone and shares it from Instagram, as a normal or trial reel, on your schedule.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why it's different</h2>
+    <p class="sub">Built around what actually gets reach.</p>
+    <div class="grid g3">
+      <div class="card"><b>Native Edits text</b><p>Captions and headers are real Instagram Edits text in the app's own fonts, not burned-in overlays.</p></div>
+      <div class="card"><b>Posted from Instagram</b><p>Every reel is shared from the Instagram app on your phone, never uploaded through an API.</p></div>
+      <div class="card"><b>Every pause cut</b><p>Dead air and false starts are detected word by word and removed, and every word you meant to say is kept.</p></div>
+      <div class="card"><b>Nothing posts unapproved</b><p>Finished videos wait in Review until you approve them.</p></div>
+      <div class="card"><b>4K60 in, 4K60 out</b><p>High-resolution footage stays high-resolution through the edit, the Edits export and the post.</p></div>
+      <div class="card"><b>Works with your AI</b><p>Claude Desktop (one click), Claude Code, and ChatGPT through a secure tunnel.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+    <p class="sub">About two minutes for the app. The iPhone connection is a one-time setup that Claude walks you through.</p>
+    <div class="steps">
+      <div class="step"><div><b class="t">Download and drag to Applications</b><p>Open <b>auto-edit.dmg</b> and drag the auto-edit icon onto the Applications folder.</p></div></div>
+      <div class="step"><div><b class="t">Allow it to open (first launch only)</b><p>This beta isn't notarized by Apple yet, so macOS asks before opening it. Open auto-edit, click <b>Done</b> on the warning, then go to</p><span class="path">System Settings → Privacy &amp; Security → scroll down → Open Anyway</span><p style="margin-top:8px">and confirm. You only do this once.</p></div></div>
+      <div class="step"><div><b class="t">Connect Claude and follow Get started</b><p>The auto-edit window opens on <b>Get started</b>. Click <b>Connect → Add to Claude Desktop</b>, then tell Claude: <i>"Run setup_status and walk me through anything that isn't ready."</i> It finishes the setup with you, including the iPhone.</p></div></div>
+    </div>
+    <p class="note">Prefer the terminal? The server also installs on its own: <code>curl -fsSL https://raw.githubusercontent.com/LochlanMacQueen/auto-edit/main/install.sh | bash</code></p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <p class="sub">What you'll need.</p>
+    <ul class="req">
+      <li><span class="dot"></span><div>An <b>Apple Silicon Mac on macOS 26</b> <em>(the editor needs it)</em></div></li>
+      <li><span class="dot"></span><div>An <b>iPhone</b> with <b>Instagram Edits</b> and <b>Instagram</b> installed and logged into the account you post from <em>(Developer Mode on, plugged in by USB)</em></div></li>
+      <li><span class="dot"></span><div><b>Xcode</b>, once, to connect the phone <em>(free from the App Store; Claude handles the rest)</em></div></li>
+      <li><span class="dot"></span><div><b>Claude Desktop</b> or <b>Claude Code</b> <em>(or ChatGPT through a tunnel)</em></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Questions</h2>
+    <details><summary>Why does macOS warn me when I open it?</summary><p>This beta is signed on this machine but not yet notarized through Apple's Developer ID program, so Gatekeeper asks you to confirm the first time. Use Privacy &amp; Security → Open Anyway. The source is public if you'd rather build it yourself.</p></details>
+    <details><summary>Will it post without me?</summary><p>Only after you approve. Finished cuts wait in the Review tab, and a reel is shared only after you approve it there, at the time you chose.</p></details>
+    <details><summary>Why does it need my iPhone?</summary><p>Captions and headers are added in the real Instagram Edits app and the reel is shared from Instagram. auto-edit drives those apps on your phone over USB. Keep the phone unlocked and on a Focus mode while it works, so notifications don't interrupt it.</p></details>
+    <details><summary>Where do my videos go?</summary><p>Everything stays on your Mac and your phone. Projects and outputs live in your own folders, and settings live in <code>~/AutoEdit</code>. The only network access is downloading the speech model once and posting to your Instagram.</p></details>
+    <details><summary>Is it free? Is it open source?</summary><p>Yes to both. auto-edit is GPL-3.0. The editor is a fork of Palmier Pro's open-source release.</p></details>
+  </section>
+
+  <div class="final">
+    <h2>Make your next reel with your AI.</h2>
+    <p class="sub" style="margin:8px auto 26px">Free for macOS.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/LochlanMacQueen/auto-edit-app/releases/latest/download/auto-edit.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Download for macOS
+      </a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>auto-edit · GPL-3.0 · <a href="https://github.com/LochlanMacQueen/auto-edit-app">app source</a> · <a href="https://github.com/LochlanMacQueen/auto-edit">server source</a></span>
+    <span>Built on the open-source release of Palmier Pro. Not affiliated with Palmier, Inc. or Instagram.</span>
+  </div>
+</footer>
+
+</body>
+</html>
