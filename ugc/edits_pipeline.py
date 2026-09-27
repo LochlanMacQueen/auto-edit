@@ -153,6 +153,35 @@ def headers(spec, video):
     H.build(spec, duration_of(video), tracks="--resume-sections" not in sys.argv)
 
 
+def set_export_quality(res="4K", fps="60"):
+    """Editor top-bar quality button (labelled HD/2K/4K) opens Resolution / Frame Rate /
+    Colour. Rule: a 4K60 source goes out of Edits at 4K60 — never downscaled."""
+    q = [n for n in phone.elements() if n.get("type") == "Button" and n.get("label") in ("HD", "2K", "4K")
+         and (n.get("rect") or {}).get("y", 999) < 80]
+    if not q:
+        log("!! quality button not found"); return False
+    r = q[0]["rect"]; phone.tap(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2); time.sleep(2.5)
+    for label in (res, fps):
+        b = [n for n in phone.elements() if n.get("type") == "Button" and n.get("label") == label
+             and 100 < (n.get("rect") or {}).get("y", 0) < 260]
+        if b:
+            rr = b[0]["rect"]; phone.tap(rr["x"] + rr["width"] / 2, rr["y"] + rr["height"] / 2); time.sleep(1.5)
+    phone.tap(60, 400); time.sleep(2)                       # dismiss the popover
+    q = [n["label"] for n in phone.elements() if n.get("type") == "Button" and n.get("label") in ("HD", "2K", "4K")
+         and (n.get("rect") or {}).get("y", 999) < 80]
+    log("export quality:", q, fps)
+    return q == [res]
+
+
+def source_is_4k(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                          "-of", "csv=p=0", path], capture_output=True, text=True).stdout.strip()
+    try:
+        w, h = (int(x) for x in out.split(",")[:2]); return max(w, h) >= 3000
+    except Exception:
+        return False
+
+
 def caption_field():
     tv = [e for e in phone.elements() if e.get("type") == "TextView" and 300 < (e.get("rect") or {}).get("y", 0) < 520]
     return tv[0] if tv else None
@@ -163,6 +192,8 @@ def export_and_compose(caption, post=False):
     KILLED first: if it is already running the handoff lands on the main feed
     instead of the reel composer."""
     T.deselect()
+    if "--4k" in sys.argv or ("--no-4k" not in sys.argv and source_is_4k(sys.argv[1])):
+        set_export_quality()
     n = phone.find("Next", exact=True, kind="Button"); phone.tap(n["x"], n["y"]); time.sleep(5)
     hd = wait_for("Export in HD", 6)
     if hd:

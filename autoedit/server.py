@@ -235,9 +235,12 @@ def format_list() -> list:
 
 # ================================================================ review
 @mcp.tool()
-def review_submit(title: str, video: str, notes: str = "", images: list[str] | None = None) -> dict:
-    """Put a finished video in the dashboard's Review section for the person to watch and approve or send back with feedback. Then call review_wait."""
-    item = R.submit(title, str(Path(video).expanduser()), notes, images)
+def review_submit(title: str, video: str, notes: str = "", images: list[str] | None = None,
+                  on_approve: dict[str, Any] | None = None) -> dict:
+    """Put a finished video in the dashboard's Review section for the person to watch and approve or send back with feedback.
+on_approve (optional) = the reel_job arguments to run automatically the moment the person approves — e.g.
+{"headers": {...}, "caption": "…", "mode": "trial", "not_before": "2026-09-27T21:30", "review": false}. Without it, call review_wait and continue yourself."""
+    item = R.submit(title, str(Path(video).expanduser()), notes, images, meta={"on_approve": on_approve} if on_approve else None)
     return {**item, "url": f"http://127.0.0.1:{PORT}/#review"}
 
 
@@ -325,6 +328,16 @@ async def api_review(_: Request):
 async def api_decide(request: Request):
     body = await request.json()
     item = R.decide(request.path_params["item_id"], body.get("status", "changes"), body.get("feedback", ""))
+    if item and item["status"] == "approved" and (item.get("meta") or {}).get("on_approve") and not item["meta"].get("job"):
+        spec = dict(item["meta"]["on_approve"])
+        nb = spec.pop("not_before", None)
+        if nb:
+            nb = time.mktime(time.strptime(nb[:16], "%Y-%m-%dT%H:%M"))
+        j = PH.add_job(item["video"], spec["headers"], spec.get("caption", ""), spec.get("mode", "normal"), nb,
+                       spec.get("review", False), spec.get("title") or item["title"], spec.get("post", True), spec.get("take_over", False))
+        item["meta"]["job"] = j["id"]
+        R.decide(item["id"], "approved", (item.get("feedback") or "") + f" → queued phone job {j['id']}")
+        item = R.get(item["id"])
     return JSONResponse(item or {"error": "unknown"})
 
 

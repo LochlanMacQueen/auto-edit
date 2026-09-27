@@ -319,7 +319,8 @@ def sections(spec):
         ok2 = split_or_reuse(header_rows()[1], iq)
         log("section", name, "name", ok1, "gold", ok2)
     c = None
-    for cue in ("want to know", "wanna know", "I made"):
+    cta_cue = spec["cta"][2] if len(spec["cta"]) > 2 and spec["cta"][2] else None
+    for cue in ([cta_cue] if cta_cue else []) + ["want to know", "wanna know", "want to get", "I made"]:
         c = T.scroll_to_caption(cue, tries=6)
         if c:
             break
