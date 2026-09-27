@@ -333,6 +333,36 @@ async def api_cancel(request: Request):
     return JSONResponse({"cancelled": PH.cancel(request.path_params["job_id"])})
 
 
+@mcp.custom_route("/api/project/new", methods=["POST"])
+async def api_project_new(request: Request):
+    """Create ~/Movies/auto-edit/<name> and reveal it in Finder — step 1 of Make a video."""
+    body = await request.json()
+    name = _slug(str(body.get("name", "")).strip())
+    if not name:
+        return JSONResponse({"error": "name required"})
+    folder = Path.home() / "Movies" / "auto-edit" / name
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "auto-edit").mkdir(exist_ok=True)
+    import subprocess
+    subprocess.Popen(["open", str(folder)])
+    return JSONResponse({"folder": str(folder)})
+
+
+@mcp.custom_route("/connect/install-claude", methods=["POST"])
+async def install_claude(_: Request):
+    """Write the .mcpb next to the data dir and hand it to Claude Desktop (registered handler)."""
+    import subprocess, zipfile as zf
+    out = HOME / "auto-edit.mcpb"; src = REPO / "mcpb-autoedit"
+    with zf.ZipFile(out, "w", zf.ZIP_DEFLATED) as z:
+        for p in src.rglob("*"):
+            if p.is_file():
+                z.write(p, str(p.relative_to(src)))
+    r = subprocess.run(["open", str(out)], capture_output=True, text=True)
+    if r.returncode:
+        return JSONResponse({"error": r.stderr.strip() or "open failed", "path": str(out)})
+    return JSONResponse({"opened": True, "path": str(out)})
+
+
 @mcp.custom_route("/api/formats", methods=["GET"])
 async def api_formats(_: Request):
     return JSONResponse(format_list())
