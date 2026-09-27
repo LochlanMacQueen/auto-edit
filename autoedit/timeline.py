@@ -25,11 +25,17 @@ def open_project(name: str, create: bool = True) -> dict:
         r = P.call("manage_project", {"action": "create", "name": name})
         if isinstance(r, dict) and r.get("error"):
             raise RuntimeError(f"could not create project: {r['error']}")
+        if isinstance(r, str) and "already exists" in r:
+            # on disk but not in this app's registry (e.g. made by another Palmier build): open by path
+            path = Path.home() / "Documents" / "Palmier Pro" / f"{name}.palmier"
+            r2 = P.call("manage_project", {"action": "open", "path": str(path)})
+            if isinstance(r2, str) and ("not" in r2.lower() or "error" in r2.lower()):
+                raise RuntimeError(f"project '{name}' exists but could not be opened: {r2}")
         lst = P.call("manage_project", {"action": "list"})
-        projects = lst.get("projects", [])
+        projects = lst.get("projects", []) if isinstance(lst, dict) else []
         target = next((p for p in projects if p.get("name") == name), None)
         if target is None:
-            raise RuntimeError(f"project '{name}' still missing after create: {r}")
+            raise RuntimeError(f"project '{name}' still missing after create/open: {r}")
     for p in projects:
         if p.get("isOpen") and p.get("id") != target.get("id"):
             P.call("manage_project", {"action": "close", "id": p["id"]})
@@ -146,11 +152,17 @@ def export(timeline_id: str | None, out_path: str, codec="H.264", timeout_s=900)
     if timeline_id:
         args["timelineId"] = timeline_id
     r = P.call("export_project", args)
-    job = r.get("jobId") if isinstance(r, dict) else None
+    if not isinstance(r, dict):
+        raise RuntimeError(f"export_project: {r}")
+    job = r.get("jobId")
+    if not job:
+        raise RuntimeError(f"export_project returned no jobId: {r}")
     t0 = time.time(); status = None
     while time.time() - t0 < timeout_s:
         ex = P.call("manage_exports", {"action": "list"})
-        e = [x for x in ex.get("exports", []) if x.get("jobId") == job] if isinstance(ex, dict) else []
+        if not isinstance(ex, dict):
+            raise RuntimeError(f"manage_exports: {ex}")
+        e = [x for x in ex.get("exports", []) if x.get("jobId") == job]
         status = e[0].get("status") if e else None
         if status in ("completed", "failed", "canceled", "cancelled"):
             break

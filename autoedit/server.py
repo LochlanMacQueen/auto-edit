@@ -51,6 +51,9 @@ def setup_status() -> dict:
         out["phone"]["ready"] = True
     out["home"] = str(HOME)
     out["dashboard"] = f"http://127.0.0.1:{PORT}"
+    out["agent_connected"] = (time.time() - LAST_AGENT["t"]) < 900 or _claude_desktop_has_extension()
+    out["last_agent_call"] = LAST_AGENT["t"] or None
+    out["claude_desktop_extension"] = _claude_desktop_has_extension()
     out["ok"] = out["ffmpeg"] and out["whisper"] and out["palmier_pro"]
     out["ready_to_post"] = out["ok"] and bool(out["phone"].get("ready"))
     out["next"] = ("all good" if out["ready_to_post"] else
@@ -409,5 +412,26 @@ async def connect_info(_: Request):
     })
 
 
+LAST_AGENT = {"t": 0.0}
+
+
+def _claude_desktop_has_extension() -> bool:
+    ext = Path.home() / "Library/Application Support/Claude/Claude Extensions"
+    try:
+        return any("auto-edit" in p.name for p in ext.iterdir())
+    except Exception:
+        return False
+
+
 def app():
-    return mcp.streamable_http_app(json_response=True, stateless_http=True)
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    class AgentActivity(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            if request.url.path.startswith("/mcp"):
+                LAST_AGENT["t"] = time.time()
+            return await call_next(request)
+
+    a = mcp.streamable_http_app(json_response=True, stateless_http=True)
+    a.add_middleware(AgentActivity)
+    return a

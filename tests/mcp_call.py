@@ -3,7 +3,7 @@
 import json, sys, urllib.request
 tool = sys.argv[1]; args = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {}
 body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": tool, "arguments": args}}).encode()
-req = urllib.request.Request("http://127.0.0.1:4747/mcp", data=body, headers={"content-type": "application/json", "accept": "application/json, text/event-stream"})
+req = urllib.request.Request(__import__("os").environ.get("AUTOEDIT_URL","http://127.0.0.1:4747/mcp"), data=body, headers={"content-type": "application/json", "accept": "application/json, text/event-stream"})
 r = json.loads(urllib.request.urlopen(req, timeout=3600).read().decode())
 if "error" in r: print("RPC ERROR", json.dumps(r["error"])[:800]); sys.exit(1)
 res = r["result"]
